@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { initializeFirebase } from './config/firebase';
 
 // Routes
+import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import eventRoutes from './routes/event.routes';
 import scheduleRoutes from './routes/schedule.routes';
@@ -61,6 +62,7 @@ app.get('/health', (_req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/schedule', scheduleRoutes);

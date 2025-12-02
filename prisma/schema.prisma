@@ -12,6 +12,12 @@ enum UserRole {
   ADMIN
 }
 
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  APPLE
+}
+
 enum EventVisibility {
   PUBLIC
   PRIVATE
@@ -39,13 +45,16 @@ enum DeviceType {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String?  @unique
-  name      String?
-  role      UserRole @default(GUEST)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id           String       @id @default(uuid())
+  firebaseUid  String       @unique
+  email        String?      @unique
+  name         String?
+  avatarUrl    String?
+  authProvider AuthProvider @default(EMAIL)
+  role         UserRole     @default(GUEST)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
 
   devices           Device[]
   guestEvents       GuestEvent[]
@@ -53,6 +62,7 @@ model User {
   eventsCreated     Event[]         @relation("EventAdmin")
   scheduleItems     ScheduleItem[]  @relation("ScheduleItemCreator")
 
+  @@index([firebaseUid])
   @@index([email])
   @@index([deletedAt])
   @@map("users")

@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+// Auth Types
+export const RegisterSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+});
+
+export const UpdateProfileSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  avatarUrl: z.string().url().optional(),
+});
+
+export type RegisterInput = z.infer<typeof RegisterSchema>;
+export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
+
 // User Types
 export const CreateUserSchema = z.object({
   email: z.string().email().optional(),
