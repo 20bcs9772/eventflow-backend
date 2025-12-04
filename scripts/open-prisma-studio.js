@@ -13,6 +13,47 @@ if (fs.existsSync(envPath)) {
   require('dotenv').config();
 }
 
+// Function to kill processes on a specific port (Windows)
+function killProcessesOnPort(port, callback) {
+  if (process.platform !== 'win32') {
+    callback();
+    return;
+  }
+
+  exec(`netstat -ano | findstr :${port}`, (error, stdout) => {
+    if (error || !stdout) {
+      callback();
+      return;
+    }
+
+    const pids = new Set();
+    const lines = stdout.split('\n');
+    lines.forEach(line => {
+      const match = line.match(/\s+(\d+)\s*$/);
+      if (match && match[1] && match[1] !== '0') {
+        pids.add(match[1]);
+      }
+    });
+
+    if (pids.size === 0) {
+      callback();
+      return;
+    }
+
+    console.log(`🧹 Cleaning up processes on port ${port}...`);
+    const pidArray = Array.from(pids);
+    const killCommand = `taskkill /F ${pidArray.map(pid => `/PID ${pid}`).join(' ')}`;
+    
+    exec(killCommand, (killError) => {
+      if (!killError) {
+        console.log(`✅ Cleaned up ${pids.size} process(es)`);
+      }
+      // Wait a bit for ports to be released
+      setTimeout(callback, 1000);
+    });
+  });
+}
+
 // Function to check if port is available
 function checkPort(port, callback) {
   const server = http.createServer();
@@ -29,13 +70,23 @@ function findAvailablePort(startPort, callback) {
     if (available) {
       callback(startPort);
     } else {
-      console.warn(`⚠️  Port ${startPort} is already in use. Trying alternative port...`);
-      findAvailablePort(startPort + 1, callback);
+      // Try to kill processes on the port first
+      killProcessesOnPort(startPort, () => {
+        // Check again after cleanup
+        checkPort(startPort, (availableAfterCleanup) => {
+          if (availableAfterCleanup) {
+            callback(startPort);
+          } else {
+            console.warn(`⚠️  Port ${startPort} is still in use. Trying alternative port...`);
+            findAvailablePort(startPort + 1, callback);
+          }
+        });
+      });
     }
   });
 }
 
-const START_PORT = 5555;
+const START_PORT = 5556;
 let PORT = START_PORT;
 let URL = `http://localhost:${PORT}`;
 
@@ -48,8 +99,11 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-// Find available port and start Prisma Studio
-findAvailablePort(START_PORT, (availablePort) => {
+// Clean up any existing processes on the default port first
+console.log('🔍 Checking for existing Prisma Studio processes...');
+killProcessesOnPort(START_PORT, () => {
+  // Find available port and start Prisma Studio
+  findAvailablePort(START_PORT, (availablePort) => {
   PORT = availablePort;
   URL = `http://localhost:${PORT}`;
   
@@ -68,7 +122,8 @@ findAvailablePort(START_PORT, (availablePort) => {
     env: { ...process.env }
   });
 
-  startStudio(studio, URL);
+    startStudio(studio, URL);
+  });
 });
 
 function startStudio(studio, studioUrl) {

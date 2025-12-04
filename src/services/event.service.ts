@@ -21,6 +21,32 @@ const generateShortCode = async (): Promise<string> => {
   return shortCode!;
 };
 
+/**
+ * Parse time string like "9:00 AM" to a Date object
+ * Combines with the event date to create a full datetime
+ */
+const parseTimeString = (dateStr: string, timeStr: string): Date => {
+  const date = new Date(dateStr);
+  const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  
+  if (!timeMatch) {
+    throw new AppError(`Invalid time format: ${timeStr}. Expected format: "HH:mm AM/PM"`, 400);
+  }
+  
+  let hours = parseInt(timeMatch[1], 10);
+  const minutes = parseInt(timeMatch[2], 10);
+  const period = timeMatch[3].toUpperCase();
+  
+  if (period === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+};
+
 export class EventService {
   async createEvent(adminId: string, data: CreateEventInput) {
     // Verify admin exists
@@ -34,26 +60,116 @@ export class EventService {
 
     // Validate date range
     const startDate = new Date(data.startDate);
-    const endDate = new Date(data.endDate);
+    let endDate = new Date(data.endDate);
+
+    // If time strings are provided, combine them with dates
+    if (data.startTime) {
+      const combinedStart = parseTimeString(data.startDate, data.startTime);
+      startDate.setHours(combinedStart.getHours(), combinedStart.getMinutes(), 0, 0);
+    }
+
+    if (data.endTime) {
+      const combinedEnd = parseTimeString(data.endDate, data.endTime);
+      endDate.setHours(combinedEnd.getHours(), combinedEnd.getMinutes(), 0, 0);
+    }
 
     if (startDate >= endDate) {
       throw new AppError('endDate must be after startDate', 400);
     }
 
+    // Build location string from venue or use simple location
+    let locationString = data.location;
+    if (data.venue) {
+      if (data.venue.fullAddress) {
+        locationString = data.venue.fullAddress;
+      } else if (data.venue.name) {
+        const parts = [
+          data.venue.name,
+          data.venue.address,
+          data.venue.city,
+          data.venue.state,
+          data.venue.zipCode,
+        ].filter(Boolean);
+        locationString = parts.join(', ');
+      }
+    }
+
     const shortCode = await generateShortCode();
 
-    return prisma.event.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        startDate,
-        endDate,
-        location: data.location,
-        visibility: data.visibility || 'PUBLIC',
-        type: data.type || 'OTHER',
-        shortCode,
-        adminId,
-      },
+    // Create event with schedule items in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const event = await tx.event.create({
+        data: {
+          name: data.name,
+          description: data.description,
+          startDate,
+          endDate,
+          location: locationString,
+          visibility: data.visibility || 'PUBLIC',
+          type: data.type || 'OTHER',
+          shortCode,
+          adminId,
+        },
+      });
+
+      // Create schedule items if provided
+      if (data.scheduleItems && data.scheduleItems.length > 0) {
+        const schedulePromises = data.scheduleItems.map(async (item, index) => {
+          // Parse time strings to datetime
+          let startTime: Date;
+          let endTime: Date;
+
+          // Check if it's an ISO datetime string (contains 'T' or 'Z' or starts with a year)
+          const isISOString = item.startTime.includes('T') || item.startTime.includes('Z') || /^\d{4}/.test(item.startTime);
+          
+          if (isISOString) {
+            // Parse as ISO datetime string
+            startTime = new Date(item.startTime);
+            endTime = new Date(item.endTime);
+          } else {
+            // Try parsing as time string (e.g., "9:00 AM")
+            try {
+              startTime = parseTimeString(data.startDate, item.startTime);
+              endTime = parseTimeString(data.startDate, item.endTime);
+            } catch (error) {
+              // If parsing fails, try as ISO datetime string as fallback
+              startTime = new Date(item.startTime);
+              endTime = new Date(item.endTime);
+            }
+          }
+
+          // Validate dates
+          if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+            throw new AppError(`Invalid time format for schedule item "${item.title}"`, 400);
+          }
+
+          if (startTime >= endTime) {
+            throw new AppError(`End time must be after start time for schedule item "${item.title}"`, 400);
+          }
+
+          return tx.scheduleItem.create({
+            data: {
+              eventId: event.id,
+              title: item.title,
+              description: item.description,
+              startTime,
+              endTime,
+              location: item.location,
+              orderIndex: item.orderIndex ?? index,
+              createdBy: adminId,
+            },
+          });
+        });
+
+        await Promise.all(schedulePromises);
+      }
+
+      return event;
+    });
+
+    // Fetch the created event with all relations
+    return prisma.event.findUnique({
+      where: { id: result.id },
       include: {
         admin: {
           select: {
@@ -61,6 +177,13 @@ export class EventService {
             name: true,
             email: true,
           },
+        },
+        scheduleItems: {
+          where: { deletedAt: null },
+          orderBy: [
+            { orderIndex: 'asc' },
+            { startTime: 'asc' },
+          ],
         },
       },
     });
@@ -186,6 +309,193 @@ export class EventService {
         startDate: 'desc',
       },
     });
+  }
+
+  /**
+   * Get public events for discovery (home screen)
+   */
+  async getPublicEvents(limit: number = 10, offset: number = 0) {
+    const now = new Date();
+    
+    return prisma.event.findMany({
+      where: {
+        visibility: { in: ['PUBLIC', 'UNLISTED'] as any },
+        deletedAt: null,
+        startDate: { gte: now }, // Only future events
+      },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        _count: {
+          select: {
+            guestEvents: true,
+          },
+        },
+      },
+      orderBy: {
+        startDate: 'asc', // Upcoming events first
+      },
+      take: limit,
+      skip: offset,
+    });
+  }
+
+  /**
+   * Get events happening now (within next 24 hours)
+   */
+  async getEventsHappeningNow(limit: number = 5) {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    return prisma.event.findMany({
+      where: {
+        visibility: { in: ['PUBLIC', 'UNLISTED'] as any },
+        deletedAt: null,
+        startDate: {
+          gte: now,
+          lte: tomorrow,
+        },
+      },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        _count: {
+          select: {
+            guestEvents: true,
+          },
+        },
+      },
+      orderBy: {
+        startDate: 'asc',
+      },
+      take: limit,
+    });
+  }
+
+  /**
+   * Get user's calendar events (both created and joined events)
+   * Returns events within a date range
+   */
+  async getCalendarEvents(userId: string, startDate?: Date, endDate?: Date) {
+    const start = startDate || new Date();
+    const end = endDate || new Date();
+    end.setMonth(end.getMonth() + 1); // Default to next month
+
+    // Get events created by user
+    const createdEvents = await prisma.event.findMany({
+      where: {
+        adminId: userId,
+        deletedAt: null,
+        startDate: {
+          gte: start,
+          lte: end,
+        },
+      },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        scheduleItems: {
+          where: { deletedAt: null },
+          orderBy: [
+            { orderIndex: 'asc' },
+            { startTime: 'asc' },
+          ],
+        },
+        _count: {
+          select: {
+            guestEvents: true,
+          },
+        },
+      },
+      orderBy: {
+        startDate: 'asc',
+      },
+    });
+
+    // Get events joined by user
+    const joinedGuestEvents = await prisma.guestEvent.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        event: {
+          deletedAt: null,
+          startDate: {
+            gte: start,
+            lte: end,
+          },
+        },
+      },
+      include: {
+        event: {
+          include: {
+            admin: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            scheduleItems: {
+              where: { deletedAt: null },
+              orderBy: [
+                { orderIndex: 'asc' },
+                { startTime: 'asc' },
+              ],
+            },
+            _count: {
+              select: {
+                guestEvents: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Combine and deduplicate events
+    const eventMap = new Map();
+    
+    createdEvents.forEach(event => {
+      eventMap.set(event.id, {
+        ...event,
+        isAdmin: true,
+      });
+    });
+
+    joinedGuestEvents.forEach(guestEvent => {
+      if (guestEvent.event && !eventMap.has(guestEvent.event.id)) {
+        eventMap.set(guestEvent.event.id, {
+          ...guestEvent.event,
+          isAdmin: false,
+          guestStatus: guestEvent.status,
+        });
+      }
+    });
+
+    // Sort by start date
+    const sortedEvents = Array.from(eventMap.values()).sort((a, b) => {
+      const dateA = new Date(a.startDate).getTime();
+      const dateB = new Date(b.startDate).getTime();
+      return dateA - dateB;
+    });
+
+    return sortedEvents;
   }
 
   async updateEvent(id: string, adminId: string, data: UpdateEventInput) {
