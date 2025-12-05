@@ -190,10 +190,12 @@ export class GuestEventService {
       where: {
         userId,
         deletedAt: null,
+        event: {
+          deletedAt: null, // Filter events that are not deleted
+        },
       },
       include: {
         event: {
-          where: { deletedAt: null },
           include: {
             scheduleItems: {
               where: { deletedAt: null },
