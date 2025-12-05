@@ -9,8 +9,7 @@
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "node scripts/open-prisma-studio.js",
-    "prisma:studio:cleanup": "node scripts/cleanup-prisma-studio.js",
+    "prisma:studio": "prisma studio --port 5556",
     "prisma:seed": "tsx prisma/seed.ts"
   },
   "keywords": ["event", "real-time", "socket.io", "express"],
