@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import eventController from '../controllers/event.controller';
 import { validate } from '../middleware/validation';
-import { verifyFirebaseToken } from '../middleware/auth';
+import { optionalAuth, verifyFirebaseToken } from '../middleware/auth';
 import { CreateEventSchema, UpdateEventSchema } from '../types';
 
 const router = Router();
@@ -17,6 +17,6 @@ router.delete('/:id', verifyFirebaseToken, eventController.deleteEvent);
 router.get('/public', eventController.getPublicEvents);
 router.get('/happening-now', eventController.getEventsHappeningNow);
 router.get('/code/:shortCode', eventController.getEventByShortCode);
-router.get('/:id', eventController.getEventById);
+router.get('/:id', optionalAuth, eventController.getEventById);
 
 export default router;

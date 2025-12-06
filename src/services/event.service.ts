@@ -1,15 +1,15 @@
-import prisma from '../config/database';
-import { CreateEventInput, UpdateEventInput } from '../types';
-import { AppError } from '../middleware/errorHandler';
-import { customAlphabet } from 'nanoid';
+import prisma from "../config/database";
+import { CreateEventInput, EventType, UpdateEventInput } from "../types";
+import { AppError } from "../middleware/errorHandler";
+import { customAlphabet } from "nanoid";
 
 // Generate unique short code (alphanumeric, uppercase)
-const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 8);
+const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 8);
 
 const generateShortCode = async (): Promise<string> => {
   let shortCode: string;
   let exists = true;
-  
+
   while (exists) {
     shortCode = nanoid();
     const existing = await prisma.event.findUnique({
@@ -17,7 +17,7 @@ const generateShortCode = async (): Promise<string> => {
     });
     exists = !!existing;
   }
-  
+
   return shortCode!;
 };
 
@@ -28,21 +28,24 @@ const generateShortCode = async (): Promise<string> => {
 const parseTimeString = (dateStr: string, timeStr: string): Date => {
   const date = new Date(dateStr);
   const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
-  
+
   if (!timeMatch) {
-    throw new AppError(`Invalid time format: ${timeStr}. Expected format: "HH:mm AM/PM"`, 400);
+    throw new AppError(
+      `Invalid time format: ${timeStr}. Expected format: "HH:mm AM/PM"`,
+      400
+    );
   }
-  
+
   let hours = parseInt(timeMatch[1], 10);
   const minutes = parseInt(timeMatch[2], 10);
   const period = timeMatch[3].toUpperCase();
-  
-  if (period === 'PM' && hours !== 12) {
+
+  if (period === "PM" && hours !== 12) {
     hours += 12;
-  } else if (period === 'AM' && hours === 12) {
+  } else if (period === "AM" && hours === 12) {
     hours = 0;
   }
-  
+
   date.setHours(hours, minutes, 0, 0);
   return date;
 };
@@ -55,7 +58,7 @@ export class EventService {
     });
 
     if (!admin || admin.deletedAt) {
-      throw new AppError('Admin user not found', 404);
+      throw new AppError("Admin user not found", 404);
     }
 
     // Validate date range
@@ -65,7 +68,12 @@ export class EventService {
     // If time strings are provided, combine them with dates
     if (data.startTime) {
       const combinedStart = parseTimeString(data.startDate, data.startTime);
-      startDate.setHours(combinedStart.getHours(), combinedStart.getMinutes(), 0, 0);
+      startDate.setHours(
+        combinedStart.getHours(),
+        combinedStart.getMinutes(),
+        0,
+        0
+      );
     }
 
     if (data.endTime) {
@@ -74,7 +82,7 @@ export class EventService {
     }
 
     if (startDate >= endDate) {
-      throw new AppError('endDate must be after startDate', 400);
+      throw new AppError("endDate must be after startDate", 400);
     }
 
     // Build location string from venue or use simple location
@@ -90,7 +98,7 @@ export class EventService {
           data.venue.state,
           data.venue.zipCode,
         ].filter(Boolean);
-        locationString = parts.join(', ');
+        locationString = parts.join(", ");
       }
     }
 
@@ -105,8 +113,8 @@ export class EventService {
           startDate,
           endDate,
           location: locationString,
-          visibility: data.visibility || 'PUBLIC',
-          type: data.type || 'OTHER',
+          visibility: data.visibility || "PUBLIC",
+          type: data.type || "OTHER",
           shortCode,
           adminId,
         },
@@ -120,8 +128,11 @@ export class EventService {
           let endTime: Date;
 
           // Check if it's an ISO datetime string (contains 'T' or 'Z' or starts with a year)
-          const isISOString = item.startTime.includes('T') || item.startTime.includes('Z') || /^\d{4}/.test(item.startTime);
-          
+          const isISOString =
+            item.startTime.includes("T") ||
+            item.startTime.includes("Z") ||
+            /^\d{4}/.test(item.startTime);
+
           if (isISOString) {
             // Parse as ISO datetime string
             startTime = new Date(item.startTime);
@@ -140,11 +151,17 @@ export class EventService {
 
           // Validate dates
           if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-            throw new AppError(`Invalid time format for schedule item "${item.title}"`, 400);
+            throw new AppError(
+              `Invalid time format for schedule item "${item.title}"`,
+              400
+            );
           }
 
           if (startTime >= endTime) {
-            throw new AppError(`End time must be after start time for schedule item "${item.title}"`, 400);
+            throw new AppError(
+              `End time must be after start time for schedule item "${item.title}"`,
+              400
+            );
           }
 
           return tx.scheduleItem.create({
@@ -180,10 +197,7 @@ export class EventService {
         },
         scheduleItems: {
           where: { deletedAt: null },
-          orderBy: [
-            { orderIndex: 'asc' },
-            { startTime: 'asc' },
-          ],
+          orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
         },
       },
     });
@@ -205,15 +219,12 @@ export class EventService {
         },
         scheduleItems: {
           where: { deletedAt: null },
-          orderBy: [
-            { orderIndex: 'asc' },
-            { startTime: 'asc' },
-          ],
+          orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
         },
         announcements: {
           where: { deletedAt: null },
           orderBy: {
-            createdAt: 'desc',
+            createdAt: "desc",
           },
           include: {
             sender: {
@@ -240,7 +251,7 @@ export class EventService {
     });
 
     if (!event) {
-      throw new AppError('Event not found', 404);
+      throw new AppError("Event not found", 404);
     }
 
     return event;
@@ -262,15 +273,12 @@ export class EventService {
         },
         scheduleItems: {
           where: { deletedAt: null },
-          orderBy: [
-            { orderIndex: 'asc' },
-            { startTime: 'asc' },
-          ],
+          orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
         },
         announcements: {
           where: { deletedAt: null },
           orderBy: {
-            createdAt: 'desc',
+            createdAt: "desc",
           },
           take: 10,
         },
@@ -278,7 +286,7 @@ export class EventService {
     });
 
     if (!event) {
-      throw new AppError('Event not found', 404);
+      throw new AppError("Event not found", 404);
     }
 
     return event;
@@ -293,10 +301,7 @@ export class EventService {
       include: {
         scheduleItems: {
           where: { deletedAt: null },
-          orderBy: [
-            { orderIndex: 'asc' },
-            { startTime: 'asc' },
-          ],
+          orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
         },
         _count: {
           select: {
@@ -306,7 +311,7 @@ export class EventService {
         },
       },
       orderBy: {
-        startDate: 'desc',
+        startDate: "desc",
       },
     });
   }
@@ -316,10 +321,10 @@ export class EventService {
    */
   async getPublicEvents(limit: number = 10, offset: number = 0) {
     const now = new Date();
-    
+
     return prisma.event.findMany({
       where: {
-        visibility: { in: ['PUBLIC', 'UNLISTED'] as any },
+        visibility: { in: ["PUBLIC", "UNLISTED"] as any },
         deletedAt: null,
         startDate: { gte: now }, // Only future events
       },
@@ -338,7 +343,7 @@ export class EventService {
         },
       },
       orderBy: {
-        startDate: 'asc', // Upcoming events first
+        startDate: "asc", // Upcoming events first
       },
       take: limit,
       skip: offset,
@@ -352,10 +357,10 @@ export class EventService {
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     return prisma.event.findMany({
       where: {
-        visibility: { in: ['PUBLIC', 'UNLISTED'] as any },
+        visibility: { in: ["PUBLIC", "UNLISTED"] as any },
         deletedAt: null,
         startDate: {
           gte: now,
@@ -377,7 +382,7 @@ export class EventService {
         },
       },
       orderBy: {
-        startDate: 'asc',
+        startDate: "asc",
       },
       take: limit,
     });
@@ -412,10 +417,7 @@ export class EventService {
         },
         scheduleItems: {
           where: { deletedAt: null },
-          orderBy: [
-            { orderIndex: 'asc' },
-            { startTime: 'asc' },
-          ],
+          orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
         },
         _count: {
           select: {
@@ -424,7 +426,7 @@ export class EventService {
         },
       },
       orderBy: {
-        startDate: 'asc',
+        startDate: "asc",
       },
     });
 
@@ -453,10 +455,7 @@ export class EventService {
             },
             scheduleItems: {
               where: { deletedAt: null },
-              orderBy: [
-                { orderIndex: 'asc' },
-                { startTime: 'asc' },
-              ],
+              orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
             },
             _count: {
               select: {
@@ -470,15 +469,15 @@ export class EventService {
 
     // Combine and deduplicate events
     const eventMap = new Map();
-    
-    createdEvents.forEach(event => {
+
+    createdEvents.forEach((event) => {
       eventMap.set(event.id, {
         ...event,
         isAdmin: true,
       });
     });
 
-    joinedGuestEvents.forEach(guestEvent => {
+    joinedGuestEvents.forEach((guestEvent) => {
       if (guestEvent.event && !eventMap.has(guestEvent.event.id)) {
         eventMap.set(guestEvent.event.id, {
           ...guestEvent.event,
@@ -498,6 +497,42 @@ export class EventService {
     return sortedEvents;
   }
 
+  /**
+   * Get events happening now (within next 24 hours)
+   */
+  async getEventsByType(type: string, limit: number = 5) {
+    const now = new Date();
+
+    return prisma.event.findMany({
+      where: {
+        visibility: { in: ["PUBLIC", "UNLISTED"] as any },
+        deletedAt: null,
+        startDate: {
+          gte: now,
+        },
+        type: type as EventType,
+      },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        _count: {
+          select: {
+            guestEvents: true,
+          },
+        },
+      },
+      orderBy: {
+        startDate: "asc",
+      },
+      take: limit,
+    });
+  }
+
   async updateEvent(id: string, adminId: string, data: UpdateEventInput) {
     // Verify event exists and belongs to admin
     const event = await prisma.event.findFirst({
@@ -509,7 +544,7 @@ export class EventService {
     });
 
     if (!event) {
-      throw new AppError('Event not found or you do not have permission', 404);
+      throw new AppError("Event not found or you do not have permission", 404);
     }
 
     // Validate date range if both dates are being updated
@@ -517,17 +552,17 @@ export class EventService {
       const startDate = new Date(data.startDate);
       const endDate = new Date(data.endDate);
       if (startDate >= endDate) {
-        throw new AppError('endDate must be after startDate', 400);
+        throw new AppError("endDate must be after startDate", 400);
       }
     } else if (data.startDate) {
       const startDate = new Date(data.startDate);
       if (startDate >= event.endDate) {
-        throw new AppError('startDate must be before existing endDate', 400);
+        throw new AppError("startDate must be before existing endDate", 400);
       }
     } else if (data.endDate) {
       const endDate = new Date(data.endDate);
       if (event.startDate >= endDate) {
-        throw new AppError('endDate must be after existing startDate', 400);
+        throw new AppError("endDate must be after existing startDate", 400);
       }
     }
 
@@ -535,7 +570,9 @@ export class EventService {
       where: { id },
       data: {
         ...(data.name && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
         ...(data.startDate && { startDate: new Date(data.startDate) }),
         ...(data.endDate && { endDate: new Date(data.endDate) }),
         ...(data.location !== undefined && { location: data.location }),
@@ -565,7 +602,7 @@ export class EventService {
     });
 
     if (!event) {
-      throw new AppError('Event not found or you do not have permission', 404);
+      throw new AppError("Event not found or you do not have permission", 404);
     }
 
     // Soft delete
