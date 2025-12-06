@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
-import authService from '../services/auth.service';
-import { asyncHandler } from '../middleware/errorHandler';
-import { AuthProvider } from '@prisma/client';
+import { Request, Response } from "express";
+import authService from "../services/auth.service";
+import { asyncHandler } from "../middleware/errorHandler";
+import { AuthProvider } from "@prisma/client";
 
 export class AuthController {
   /**
@@ -13,7 +13,7 @@ export class AuthController {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
@@ -29,7 +29,7 @@ export class AuthController {
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: "User registered successfully",
       data: user,
     });
   });
@@ -43,21 +43,21 @@ export class AuthController {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
     const user = await authService.registerOrLoginUser({
       firebaseUid: req.user.uid,
       email: req.user.email,
-      name: req.user.name,
+      name: req.user.name || req.body.name,
       avatarUrl: req.user.picture,
       authProvider: req.user.authProvider as AuthProvider,
     });
 
     res.json({
       success: true,
-      message: 'Login successful',
+      message: "Login successful",
       data: user,
     });
   });
@@ -70,7 +70,7 @@ export class AuthController {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
@@ -90,7 +90,7 @@ export class AuthController {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
@@ -103,7 +103,7 @@ export class AuthController {
 
     res.json({
       success: true,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       data: user,
     });
   });
@@ -116,7 +116,7 @@ export class AuthController {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
@@ -137,7 +137,7 @@ export class AuthController {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid or expired token',
+        message: "Invalid or expired token",
       });
     }
 
@@ -146,7 +146,7 @@ export class AuthController {
 
     res.json({
       success: true,
-      message: 'Token is valid',
+      message: "Token is valid",
       data: {
         isRegistered: !!user,
         user: user || null,
@@ -156,5 +156,3 @@ export class AuthController {
 }
 
 export default new AuthController();
-
-

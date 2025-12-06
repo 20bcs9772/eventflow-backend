@@ -55,6 +55,7 @@ model User {
   email        String?      @unique
   name         String?
   avatarUrl    String?
+  verified     Boolean      @default(false)
   authProvider AuthProvider @default(EMAIL)
   role         UserRole     @default(GUEST)
   createdAt    DateTime     @default(now())

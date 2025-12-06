@@ -82,6 +82,42 @@ async function main() {
     'Uma Sharma', 'Victor Chen', 'Wendy Johnson', 'Xavier Lee', 'Yuki Tanaka',
     'Zoe Williams', 'Alex Rivera', 'Blake Cooper', 'Casey Morgan', 'Drew Foster',
     'Emma Stone', 'Felix Brown', 'Gina Lopez', 'Hugo Silva', 'Isla Martinez',
+    // Marvel Characters
+    'Peter Parker', 'Tony Stark', 'Steve Rogers', 'Natasha Romanoff', 'Bruce Banner',
+    'Thor Odinson', 'Wanda Maximoff', 'Scott Lang', 'Carol Danvers', 'T\'Challa',
+    'Wade Wilson', 'Logan Howlett', 'Jean Grey', 'Charles Xavier', 'Erik Lehnsherr',
+    'Ororo Munroe', 'Kurt Wagner', 'Kitty Pryde', 'Bobby Drake', 'Rogue',
+    // DC Characters
+    'Clark Kent', 'Bruce Wayne', 'Diana Prince', 'Barry Allen', 'Arthur Curry',
+    'Hal Jordan', 'Oliver Queen', 'J\'onn J\'onzz', 'Victor Stone', 'Kara Zor-El',
+    // The Boys / Invincible
+    'Hughie Campbell', 'Billy Butcher', 'Annie January', 'Mark Grayson', 'Omni-Man',
+    // Star Wars
+    'Luke Skywalker', 'Leia Organa', 'Han Solo', 'Obi-Wan Kenobi', 'Anakin Skywalker',
+    'Padmé Amidala', 'Rey Palpatine', 'Finn', 'Poe Dameron', 'Ahsoka Tano',
+    // Harry Potter
+    'Harry Potter', 'Hermione Granger', 'Ron Weasley', 'Draco Malfoy', 'Luna Lovegood',
+    'Neville Longbottom', 'Ginny Weasley', 'Severus Snape', 'Albus Dumbledore', 'Minerva McGonagall',
+    // LOTR
+    'Frodo Baggins', 'Samwise Gamgee', 'Aragorn', 'Legolas', 'Gimli',
+    'Gandalf', 'Boromir', 'Merry Brandybuck', 'Pippin Took', 'Arwen',
+    // Stranger Things
+    'Eleven', 'Mike Wheeler', 'Dustin Henderson', 'Lucas Sinclair', 'Will Byers',
+    'Max Mayfield', 'Steve Harrington', 'Nancy Wheeler', 'Jonathan Byers', 'Jim Hopper',
+    // Game of Thrones
+    'Jon Snow', 'Daenerys Targaryen', 'Tyrion Lannister', 'Arya Stark', 'Sansa Stark',
+    'Cersei Lannister', 'Jaime Lannister', 'Brienne of Tarth', 'Samwell Tarly', 'Bran Stark',
+    // Anime
+    'Naruto Uzumaki', 'Goku', 'Luffy', 'Ichigo Kurosaki', 'Light Yagami',
+    'Eren Yeager', 'Levi Ackerman', 'Tanjiro Kamado', 'Edward Elric', 'Spike Spiegel',
+    // Hollywood / The Devil Wears Prada
+    'Miranda Priestly', 'Andy Sachs', 'Emily Charlton', 'Nigel Kipling',
+    // Breaking Bad
+    'Walter White', 'Jesse Pinkman', 'Saul Goodman', 'Gus Fring',
+    // Spider-Verse
+    'Miles Morales', 'Gwen Stacy', 'Peter B. Parker', 'Spider-Ham',
+    // Wakanda
+    'Shuri', 'Okoye', 'Nakia', 'M\'Baku',
   ];
 
   for (let i = 0; i < guestNames.length; i++) {
@@ -695,6 +731,128 @@ async function main() {
       duration: 4,
       location: 'Culinary Studio, 1000 Chef Avenue, San Francisco, CA 94102',
     },
+    // Pop Culture Themed Events
+    {
+      name: 'X-Men Hellfire Gala',
+      description: 'The most exclusive mutant event of the year. Formal attire required. Join the X-Men for an evening of elegance and celebration.',
+      type: 'OTHER' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin1,
+      daysOffset: 40,
+      startHour: 19,
+      duration: 6,
+      location: 'Krakoa Embassy, 1 Mutant Avenue, New York, NY 10001',
+    },
+    {
+      name: 'Met Gala 2024',
+      description: 'Fashion\'s biggest night. The Metropolitan Museum of Art Costume Institute Gala. Black tie, themed attire.',
+      type: 'OTHER' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin2,
+      daysOffset: 45,
+      startHour: 18,
+      duration: 5,
+      location: 'Metropolitan Museum of Art, 1000 5th Avenue, New York, NY 10028',
+    },
+    {
+      name: 'The Devil Wears Prada - Runway Show',
+      description: 'Exclusive fashion showcase inspired by the iconic film. High fashion, high stakes.',
+      type: 'OTHER' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin3,
+      daysOffset: 35,
+      startHour: 20,
+      duration: 3,
+      location: 'Runway Hall, 666 Fashion Boulevard, New York, NY 10018',
+    },
+    {
+      name: 'Star Wars Galactic Summit',
+      description: 'A gathering of beings from across the galaxy. Discuss diplomacy, trade, and the future of the galaxy.',
+      type: 'CORPORATE' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin1,
+      daysOffset: 50,
+      startHour: 10,
+      duration: 8,
+      location: 'Coruscant Convention Center, Galactic City, Coruscant',
+    },
+    {
+      name: 'Hogwarts Yule Ball',
+      description: 'The Triwizard Tournament Yule Ball. Formal wizarding attire required. Dancing, feasting, and magical entertainment.',
+      type: 'OTHER' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin2,
+      daysOffset: 60,
+      startHour: 19,
+      duration: 5,
+      location: 'Hogwarts Great Hall, Hogwarts School of Witchcraft and Wizardry, Scotland',
+    },
+    {
+      name: 'LOTR Shire Festival',
+      description: 'A celebration of peace and prosperity in the Shire. Food, music, fireworks, and good cheer for all hobbits and friends.',
+      type: 'OTHER' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin3,
+      daysOffset: 38,
+      startHour: 14,
+      duration: 8,
+      location: 'Party Tree, Hobbiton, The Shire',
+    },
+    {
+      name: 'Spider-Verse Festival',
+      description: 'A multiversal gathering of Spider-People. Celebrate heroism, responsibility, and the power of choice.',
+      type: 'OTHER' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin1,
+      daysOffset: 42,
+      startHour: 16,
+      duration: 6,
+      location: 'Multiverse Plaza, 1610 Brooklyn, New York, NY 11201',
+    },
+    {
+      name: 'The Boys Vought BBQ',
+      description: 'Vought International\'s annual company BBQ. Free food, entertainment, and meet your favorite Supes!',
+      type: 'CORPORATE' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin2,
+      daysOffset: 25,
+      startHour: 12,
+      duration: 6,
+      location: 'Vought Tower Rooftop, 1 Vought Plaza, New York, NY 10001',
+    },
+    {
+      name: 'Anime Multiverse Meetup',
+      description: 'The ultimate anime fan gathering. Cosplay contest, panels, screenings, and meet fellow weebs from across dimensions.',
+      type: 'COLLEGE_FEST' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin3,
+      daysOffset: 55,
+      startHour: 10,
+      duration: 12,
+      location: 'Anime Convention Center, 2000 Otaku Street, Los Angeles, CA 90015',
+    },
+    {
+      name: 'Breaking Bad Chemistry Workshop',
+      description: 'Advanced chemistry techniques and applications. For educational purposes only. Safety protocols strictly enforced.',
+      type: 'CORPORATE' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin1,
+      daysOffset: 32,
+      startHour: 14,
+      duration: 4,
+      location: 'Chemistry Lab, 308 Negra Arroyo Lane, Albuquerque, NM 87104',
+    },
+    {
+      name: 'Wakanda Tech Expo',
+      description: 'Showcase of Wakandan technology and innovation. Vibranium applications, advanced AI, and sustainable energy solutions.',
+      type: 'CORPORATE' as const,
+      visibility: 'PUBLIC' as const,
+      admin: admin2,
+      daysOffset: 48,
+      startHour: 9,
+      duration: 8,
+      location: 'Wakanda Design Group, Birnin Zana, Wakanda',
+    },
   ];
 
   for (const template of eventTemplates) {
@@ -935,6 +1093,96 @@ async function main() {
       { title: 'Hands-On Cooking', startTime: 19, endTime: 20, location: 'Cooking Stations' },
       { title: 'Dinner Together', startTime: 20, endTime: 21, location: 'Dining Area' },
     ],
+    // X-Men Hellfire Gala
+    [
+      { title: 'Red Carpet Arrival', startTime: 19, endTime: 20, location: 'Main Entrance' },
+      { title: 'Cocktail Reception', startTime: 20, endTime: 21, location: 'Grand Ballroom' },
+      { title: 'Dinner Service', startTime: 21, endTime: 22.5, location: 'Dining Hall' },
+      { title: 'Mutant Showcase', startTime: 22.5, endTime: 23.5, location: 'Main Stage' },
+      { title: 'Dancing & Celebration', startTime: 23.5, endTime: 1, location: 'Dance Floor' },
+    ],
+    // Met Gala
+    [
+      { title: 'Red Carpet Arrivals', startTime: 18, endTime: 19.5, location: 'Museum Steps' },
+      { title: 'Exhibition Viewing', startTime: 19.5, endTime: 21, location: 'Costume Institute' },
+      { title: 'Dinner & Speeches', startTime: 21, endTime: 22.5, location: 'Temple of Dendur' },
+      { title: 'After Party', startTime: 22.5, endTime: 23, location: 'VIP Lounge' },
+    ],
+    // The Devil Wears Prada Runway
+    [
+      { title: 'VIP Reception', startTime: 20, endTime: 20.5, location: 'Backstage Lounge' },
+      { title: 'Fashion Show', startTime: 20.5, endTime: 22, location: 'Main Runway' },
+      { title: 'Designer Meet & Greet', startTime: 22, endTime: 23, location: 'Reception Area' },
+    ],
+    // Star Wars Galactic Summit
+    [
+      { title: 'Opening Ceremony', startTime: 10, endTime: 11, location: 'Senate Chamber' },
+      { title: 'Diplomatic Sessions', startTime: 11, endTime: 13, location: 'Conference Rooms' },
+      { title: 'Lunch Break', startTime: 13, endTime: 14, location: 'Dining Facility' },
+      { title: 'Trade Negotiations', startTime: 14, endTime: 16, location: 'Trade Hall' },
+      { title: 'Cultural Exchange', startTime: 16, endTime: 17, location: 'Cultural Pavilion' },
+      { title: 'Closing Address', startTime: 17, endTime: 18, location: 'Senate Chamber' },
+    ],
+    // Hogwarts Yule Ball
+    [
+      { title: 'Arrival & Welcome', startTime: 19, endTime: 19.5, location: 'Great Hall Entrance' },
+      { title: 'Opening Dance', startTime: 19.5, endTime: 20, location: 'Great Hall' },
+      { title: 'Feast Service', startTime: 20, endTime: 21.5, location: 'Great Hall' },
+      { title: 'Dancing & Entertainment', startTime: 21.5, endTime: 23.5, location: 'Great Hall' },
+      { title: 'Midnight Toast', startTime: 23.5, endTime: 24, location: 'Great Hall' },
+    ],
+    // LOTR Shire Festival
+    [
+      { title: 'Festival Opening', startTime: 14, endTime: 14.5, location: 'Party Field' },
+      { title: 'Food & Ale Service', startTime: 14.5, endTime: 17, location: 'Feast Tables' },
+      { title: 'Music & Dancing', startTime: 17, endTime: 20, location: 'Dance Floor' },
+      { title: 'Fireworks Display', startTime: 20, endTime: 20.5, location: 'Party Field' },
+      { title: 'Evening Social', startTime: 20.5, endTime: 22, location: 'Party Field' },
+    ],
+    // Spider-Verse Festival
+    [
+      { title: 'Multiverse Portal Opening', startTime: 16, endTime: 16.5, location: 'Main Plaza' },
+      { title: 'Spider-People Meetup', startTime: 16.5, endTime: 18, location: 'Meetup Zone' },
+      { title: 'Hero Showcase', startTime: 18, endTime: 19.5, location: 'Main Stage' },
+      { title: 'Responsibility Panel', startTime: 19.5, endTime: 20.5, location: 'Panel Hall' },
+      { title: 'Community Celebration', startTime: 20.5, endTime: 22, location: 'Main Plaza' },
+    ],
+    // The Boys Vought BBQ
+    [
+      { title: 'Check-in & Welcome', startTime: 12, endTime: 12.5, location: 'Rooftop Entrance' },
+      { title: 'BBQ Lunch Service', startTime: 12.5, endTime: 14.5, location: 'Grill Area' },
+      { title: 'Supe Meet & Greet', startTime: 14.5, endTime: 16, location: 'Meet & Greet Zone' },
+      { title: 'Entertainment & Games', startTime: 16, endTime: 17.5, location: 'Activity Area' },
+      { title: 'Closing Remarks', startTime: 17.5, endTime: 18, location: 'Main Stage' },
+    ],
+    // Anime Multiverse Meetup
+    [
+      { title: 'Registration & Cosplay Check-in', startTime: 10, endTime: 11, location: 'Convention Lobby' },
+      { title: 'Opening Ceremony', startTime: 11, endTime: 11.5, location: 'Main Hall' },
+      { title: 'Panel Sessions', startTime: 11.5, endTime: 14, location: 'Panel Rooms' },
+      { title: 'Lunch Break', startTime: 14, endTime: 15, location: 'Food Court' },
+      { title: 'Cosplay Contest', startTime: 15, endTime: 17, location: 'Main Stage' },
+      { title: 'Anime Screenings', startTime: 17, endTime: 19, location: 'Screening Rooms' },
+      { title: 'Merchandise & Artist Alley', startTime: 19, endTime: 21, location: 'Exhibition Hall' },
+      { title: 'Closing Ceremony', startTime: 21, endTime: 22, location: 'Main Hall' },
+    ],
+    // Breaking Bad Chemistry Workshop
+    [
+      { title: 'Safety Briefing', startTime: 14, endTime: 14.5, location: 'Lecture Hall' },
+      { title: 'Theory Session', startTime: 14.5, endTime: 15.5, location: 'Lecture Hall' },
+      { title: 'Lab Demonstration', startTime: 15.5, endTime: 17, location: 'Chemistry Lab' },
+      { title: 'Q&A & Discussion', startTime: 17, endTime: 18, location: 'Lecture Hall' },
+    ],
+    // Wakanda Tech Expo
+    [
+      { title: 'Opening Keynote', startTime: 9, endTime: 10, location: 'Main Auditorium' },
+      { title: 'Vibranium Applications', startTime: 10, endTime: 11.5, location: 'Tech Pavilion' },
+      { title: 'AI & Robotics Showcase', startTime: 11.5, endTime: 13, location: 'Innovation Hall' },
+      { title: 'Lunch Break', startTime: 13, endTime: 14, location: 'Dining Facility' },
+      { title: 'Sustainable Energy Solutions', startTime: 14, endTime: 15.5, location: 'Energy Pavilion' },
+      { title: 'Medical Technology', startTime: 15.5, endTime: 17, location: 'Medical Wing' },
+      { title: 'Closing & Networking', startTime: 17, endTime: 17, location: 'Networking Lounge' },
+    ],
   ];
 
   // Add schedules to new events (starting from index 5, after the original 5 events)
@@ -1029,7 +1277,7 @@ async function main() {
   }
 
   // Add guests to all new events (varying numbers and statuses)
-  const guestCountsPerEvent = [12, 8, 15, 20, 10, 18, 14, 25, 16, 12, 8, 6, 22, 5, 9];
+  const guestCountsPerEvent = [12, 8, 15, 20, 10, 18, 14, 25, 16, 12, 8, 6, 22, 5, 9, 30, 25, 15, 35, 28, 22, 20, 18, 25, 15, 20];
   
   for (let i = 0; i < eventTemplates.length; i++) {
     const event = events[5 + i];
