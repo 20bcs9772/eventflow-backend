@@ -5,7 +5,6 @@ import { asyncHandler } from "../middleware/errorHandler";
 import { emitEventUpdate } from "../socket/socketHandlers";
 import userService from "../services/user.service";
 import { AppError } from "../middleware/errorHandler";
-import { checkEventAccess } from "../middleware/event";
 import { User } from "@prisma/client";
 
 // Get user ID from Firebase auth middleware
@@ -39,19 +38,10 @@ export class EventController {
   );
 
   getEventById = asyncHandler(async (req: Request, res: Response) => {
-    const event = await eventService.getEventById(req.params.id);
-
-    const access = await checkEventAccess(
-      event,
+    const event = await eventService.getEventById(
+      req.params.id,
       req.user as User | null | undefined
     );
-
-    if (!access.allowed) {
-      return res.status(access.status || 403).json({
-        success: false,
-        message: access.message,
-      });
-    }
 
     return res.json({
       success: true,
@@ -79,7 +69,10 @@ export class EventController {
   );
 
   getEventsByType = asyncHandler(async (req: Request, res: Response) => {
-    const events = await eventService.getEventsByType(req.params.type);
+    const events = await eventService.getEventsByType(
+      req.params.type,
+      req.user as User | null | undefined
+    );
 
     return res.json({
       success: true,

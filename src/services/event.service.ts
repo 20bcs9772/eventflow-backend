@@ -2,6 +2,8 @@ import prisma from "../config/database";
 import { CreateEventInput, EventType, UpdateEventInput } from "../types";
 import { AppError } from "../middleware/errorHandler";
 import { customAlphabet } from "nanoid";
+import { User } from "@prisma/client";
+import { buildEventAccessWhereClause } from "../utils/eventAccessRules";
 
 // Generate unique short code (alphanumeric, uppercase)
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 8);
@@ -203,10 +205,11 @@ export class EventService {
     });
   }
 
-  async getEventById(id: string) {
+  async getEventById(id: string, user: User | null | undefined) {
     const event = await prisma.event.findFirst({
       where: {
         id,
+        ...buildEventAccessWhereClause(user),
         deletedAt: null,
       },
       include: {
@@ -324,7 +327,7 @@ export class EventService {
 
     return prisma.event.findMany({
       where: {
-        visibility: { in: ["PUBLIC", "UNLISTED"] as any },
+        visibility: "PUBLIC",
         deletedAt: null,
         startDate: { gte: now }, // Only future events
       },
@@ -356,11 +359,11 @@ export class EventService {
   async getEventsHappeningNow(limit: number = 5) {
     const now = new Date();
     const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setDate(tomorrow.getDate() + 2);
 
     return prisma.event.findMany({
       where: {
-        visibility: { in: ["PUBLIC", "UNLISTED"] as any },
+        visibility: "PUBLIC",
         deletedAt: null,
         startDate: {
           gte: now,
@@ -395,115 +398,57 @@ export class EventService {
   async getCalendarEvents(userId: string, startDate?: Date, endDate?: Date) {
     const start = startDate || new Date();
     const end = endDate || new Date();
-    end.setMonth(end.getMonth() + 1); // Default to next month
+    end.setMonth(end.getMonth() + 1);
 
-    // Get events created by user
-    const createdEvents = await prisma.event.findMany({
+    const events = await prisma.event.findMany({
       where: {
-        adminId: userId,
         deletedAt: null,
-        startDate: {
-          gte: start,
-          lte: end,
-        },
+        startDate: { gte: start, lte: end },
+        OR: [
+          { adminId: userId },
+          {
+            guestEvents: {
+              some: {
+                userId,
+                deletedAt: null,
+              },
+            },
+          },
+        ],
       },
       include: {
         admin: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+          select: { id: true, name: true, email: true },
         },
         scheduleItems: {
           where: { deletedAt: null },
           orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
         },
         _count: {
-          select: {
-            guestEvents: true,
-          },
+          select: { guestEvents: true },
+        },
+        guestEvents: {
+          where: { userId },
+          select: { status: true },
         },
       },
-      orderBy: {
-        startDate: "asc",
-      },
+      orderBy: { startDate: "asc" },
     });
 
-    // Get events joined by user
-    const joinedGuestEvents = await prisma.guestEvent.findMany({
-      where: {
-        userId,
-        deletedAt: null,
-        event: {
-          deletedAt: null,
-          startDate: {
-            gte: start,
-            lte: end,
-          },
-        },
-      },
-      include: {
-        event: {
-          include: {
-            admin: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-            scheduleItems: {
-              where: { deletedAt: null },
-              orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
-            },
-            _count: {
-              select: {
-                guestEvents: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    // Combine and deduplicate events
-    const eventMap = new Map();
-
-    createdEvents.forEach((event) => {
-      eventMap.set(event.id, {
-        ...event,
-        isAdmin: true,
-      });
-    });
-
-    joinedGuestEvents.forEach((guestEvent) => {
-      if (guestEvent.event && !eventMap.has(guestEvent.event.id)) {
-        eventMap.set(guestEvent.event.id, {
-          ...guestEvent.event,
-          isAdmin: false,
-          guestStatus: guestEvent.status,
-        });
-      }
-    });
-
-    // Sort by start date
-    const sortedEvents = Array.from(eventMap.values()).sort((a, b) => {
-      const dateA = new Date(a.startDate).getTime();
-      const dateB = new Date(b.startDate).getTime();
-      return dateA - dateB;
-    });
-
-    return sortedEvents;
+    return events;
   }
 
   /**
    * Get events happening now (within next 24 hours)
    */
-  async getEventsByType(type: string, limit: number = 5) {
+  async getEventsByType(
+    type: string,
+    user: User | null | undefined,
+    limit: number = 5
+  ) {
     return prisma.event.findMany({
       where: {
-        visibility: "PUBLIC",
+        ...buildEventAccessWhereClause(user),
         deletedAt: null,
         type: type as EventType,
       },

@@ -22,12 +22,12 @@ router.patch(
   eventController.updateEvent
 );
 router.delete("/:id", verifyFirebaseToken, eventController.deleteEvent);
-router.get("/type/:type", verifyFirebaseToken, eventController.getEventsByType);
 
 // Public routes
 router.get("/public", eventController.getPublicEvents);
 router.get("/happening-now", eventController.getEventsHappeningNow);
 router.get("/code/:shortCode", eventController.getEventByShortCode);
 router.get("/:id", optionalAuth, eventController.getEventById);
+router.get("/type/:type", optionalAuth, eventController.getEventsByType);
 
 export default router;
