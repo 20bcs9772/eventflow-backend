@@ -291,6 +291,40 @@ export class GuestEventService {
     });
   }
 
+  async getGuestEventByUserAndEvent(userId: string, eventId: string) {
+    return prisma.guestEvent.findFirst({
+      where: {
+        userId,
+        eventId,
+        deletedAt: null,
+        user: {
+          deletedAt: null,
+        },
+        event: {
+          deletedAt: null,
+        },
+      },
+      include: {
+        event: {
+          include: {
+            scheduleItems: {
+              where: { deletedAt: null },
+              orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
+            },
+            _count: {
+              select: {
+                guestEvents: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        joinedAt: "desc",
+      },
+    });
+  }
+
   async leaveEvent(userId: string, eventId: string) {
     const guestEvent = await prisma.guestEvent.findFirst({
       where: {

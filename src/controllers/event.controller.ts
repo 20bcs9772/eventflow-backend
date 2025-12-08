@@ -5,6 +5,8 @@ import { asyncHandler } from "../middleware/errorHandler";
 import { emitEventUpdate } from "../socket/socketHandlers";
 import userService from "../services/user.service";
 import { AppError } from "../middleware/errorHandler";
+import { checkEventAccess } from "../middleware/event";
+import { User } from "@prisma/client";
 
 // Get user ID from Firebase auth middleware
 const getUserId = (req: Request): string => {
@@ -39,24 +41,19 @@ export class EventController {
   getEventById = asyncHandler(async (req: Request, res: Response) => {
     const event = await eventService.getEventById(req.params.id);
 
-    if (event.visibility === "UNLISTED" && !req.user) {
-      return res.status(401).json({
+    const access = await checkEventAccess(
+      event,
+      req.user as User | null | undefined
+    );
+
+    if (!access.allowed) {
+      return res.status(access.status || 403).json({
         success: false,
-        message: "Unauthorized: Login required to access this unlisted event.",
+        message: access.message,
       });
     }
 
-    if (
-      event.visibility === "PRIVATE" &&
-      req?.user &&
-      req.user.email !== event.admin.email
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: You are not allowed to access this private event.",
-      });
-    }
-    res.json({
+    return res.json({
       success: true,
       data: event,
     });
@@ -80,6 +77,15 @@ export class EventController {
       });
     }
   );
+
+  getEventsByType = asyncHandler(async (req: Request, res: Response) => {
+    const events = await eventService.getEventsByType(req.params.type);
+
+    return res.json({
+      success: true,
+      data: events,
+    });
+  });
 
   updateEvent = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {

@@ -501,15 +501,10 @@ export class EventService {
    * Get events happening now (within next 24 hours)
    */
   async getEventsByType(type: string, limit: number = 5) {
-    const now = new Date();
-
     return prisma.event.findMany({
       where: {
-        visibility: { in: ["PUBLIC", "UNLISTED"] as any },
+        visibility: "PUBLIC",
         deletedAt: null,
-        startDate: {
-          gte: now,
-        },
         type: type as EventType,
       },
       include: {
