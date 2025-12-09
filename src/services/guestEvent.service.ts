@@ -8,17 +8,10 @@ export class GuestEventService {
     let event;
 
     // Find event by ID or shortCode
-    if (data.eventId) {
+    if (data.eventId || data.shortCode) {
       event = await prisma.event.findFirst({
         where: {
-          id: data.eventId,
-          deletedAt: null,
-        },
-      });
-    } else if (data.shortCode) {
-      event = await prisma.event.findFirst({
-        where: {
-          shortCode: data.shortCode,
+          OR: [{ id: data?.eventId }, { shortCode: data?.shortCode }],
           deletedAt: null,
         },
       });
