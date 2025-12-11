@@ -179,7 +179,7 @@ export const swaggerPaths = {
       responses: noContentResponse,
     },
   },
-  "/events/type/{type}": {
+  "/events/types/{type}": {
     get: {
       tags: ["Events"],
       summary: "Get events by type",

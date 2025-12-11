@@ -2,8 +2,12 @@ import prisma from "../config/database";
 import { CreateEventInput, EventType, UpdateEventInput } from "../types";
 import { AppError } from "../middleware/errorHandler";
 import { customAlphabet } from "nanoid";
-import { User } from "@prisma/client";
-import { buildEventAccessWhereClause } from "../utils/eventAccessRules";
+import { EventType as EventTypes, User } from "@prisma/client";
+import {
+  buildEventAccessWhereClause,
+  privateEventAccess,
+  publicEventAccess,
+} from "../utils/eventAccessRules";
 
 // Generate unique short code (alphanumeric, uppercase)
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 8);
@@ -439,7 +443,14 @@ export class EventService {
   }
 
   /**
-   * Get events happening now (within next 24 hours)
+   * Get types of events
+   */
+  async getTypesOfEvents() {
+    return Object.values(EventTypes);
+  }
+
+  /**
+   * Get events by type
    */
   async getEventsByType(
     type: string,
@@ -448,7 +459,7 @@ export class EventService {
   ) {
     return prisma.event.findMany({
       where: {
-        ...buildEventAccessWhereClause(user),
+        OR: [publicEventAccess, privateEventAccess(user)],
         deletedAt: null,
         type: type as EventType,
       },

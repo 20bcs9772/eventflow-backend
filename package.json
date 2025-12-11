@@ -10,7 +10,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio --port 5556",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:update": "tsx prisma/updateDB.ts",
+    "prisma:hn": "tsx prisma/seed-happening-now.ts"
   },
   "keywords": [
     "event",

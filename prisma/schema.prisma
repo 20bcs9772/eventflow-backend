@@ -112,6 +112,10 @@ model Event {
   announcements  Announcement[]
   guestEvents    GuestEvent[]
 
+  coverImage      String?
+  portraitImage   String?
+  galleryImages   String[]
+
   @@index([adminId])
   @@index([shortCode])
   @@index([startDate])

@@ -68,6 +68,15 @@ export class EventController {
     }
   );
 
+  getTypesOfEvents = asyncHandler(async (req: Request, res: Response) => {
+    const types = await eventService.getTypesOfEvents();
+
+    return res.json({
+      success: true,
+      data: types,
+    });
+  });
+
   getEventsByType = asyncHandler(async (req: Request, res: Response) => {
     const events = await eventService.getEventsByType(
       req.params.type,

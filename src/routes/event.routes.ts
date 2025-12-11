@@ -27,7 +27,8 @@ router.delete("/:id", verifyFirebaseToken, eventController.deleteEvent);
 router.get("/public", eventController.getPublicEvents);
 router.get("/happening-now", eventController.getEventsHappeningNow);
 router.get("/code/:shortCode", eventController.getEventByShortCode);
+router.get("/types", eventController.getTypesOfEvents);
+router.get("/types/:type", optionalAuth, eventController.getEventsByType);
 router.get("/:id", optionalAuth, eventController.getEventById);
-router.get("/type/:type", optionalAuth, eventController.getEventsByType);
 
 export default router;

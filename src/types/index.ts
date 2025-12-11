@@ -73,7 +73,10 @@ export const CreateEventSchema = z
     startTime: z.string().optional(), // Time string like "9:00 AM"
     endTime: z.string().optional(), // Time string like "5:00 PM"
     timeZone: z.string().optional(),
-    location: z.string().optional(), // Simple location string
+    location: z.string().optional(),
+    coverImage: z.string().optional(),
+    portraitImage: z.string().optional(),
+    galleryImages: z.array(z.string()).optional(),
     venue: VenueSchema, // Detailed venue object
     visibility: z.enum(["PUBLIC", "PRIVATE", "UNLISTED"]).optional(),
     type: z
@@ -96,6 +99,9 @@ export const UpdateEventSchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   location: z.string().optional(),
+  coverImage: z.string().optional(),
+  portraitImage: z.string().optional(),
+  galleryImages: z.array(z.string()).optional(),
   visibility: z.enum(["PUBLIC", "PRIVATE", "UNLISTED"]).optional(),
   type: z
     .enum(["WEDDING", "BIRTHDAY", "CORPORATE", "COLLEGE_FEST", "OTHER"])
