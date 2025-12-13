@@ -13,75 +13,84 @@ const getQuery = (query: string) => {
     case "BIRTHDAY":
       return "birthday";
     case "OTHER":
-      return "event";
     default:
       return "event";
   }
 };
 
-const randomInt = (min: number, max: number): number => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
+const randomIndex = (length: number) => Math.floor(Math.random() * length);
 
 const generateUrl = (
   query: string,
-  orientation: "landscape" | "portrait" | "squarish" = "landscape",
-  limit: number = 10
-) => {
-  return `https://api.unsplash.com/search/photos?client_id=GcDvkttRs2WE0WvMBf3oRc2rQ7W-Uuv6mDfolAwANeQ&query=${getQuery(
+  orientation: "landscape" | "portrait",
+  limit = 10
+) =>
+  `https://api.unsplash.com/search/photos?client_id=GcDvkttRs2WE0WvMBf3oRc2rQ7W-Uuv6mDfolAwANeQ&query=${getQuery(
     query
   )}&orientation=${orientation}&per_page=${limit}`;
-};
 
 async function main() {
   const allEventTypes = Object.values(EventType);
-  allEventTypes.map(async (eventType) => {
-    const totalRecords = await prisma.event.count({
+
+  for (const eventType of allEventTypes) {
+    console.log(`\n Processing ${eventType} events`);
+
+    const events = await prisma.event.findMany({
       where: {
         type: eventType,
+        coverImage: null,
+        portraitImage: null,
       },
     });
 
-    console.log("Event Type - ", eventType, " Records - ", totalRecords);
+    if (!events.length) {
+      console.log("No events to update");
+      continue;
+    }
 
-    const fetchLandscapeImages = await fetch(
-      generateUrl(eventType, "landscape", 6)
-    );
+    const [landscapeRes, portraitRes] = await Promise.all([
+      fetch(generateUrl(eventType, "landscape", 12)),
+      fetch(generateUrl(eventType, "portrait", 12)),
+    ]);
 
-    const jsonifiedLandscapeImages = await fetchLandscapeImages.json();
+    const landscapeImages = (await landscapeRes.json())?.results ?? [];
+    const portraitImages = (await portraitRes.json())?.results ?? [];
 
-    const landscapeImages = jsonifiedLandscapeImages.results;
+    if (!landscapeImages.length || !portraitImages.length) {
+      console.warn(`No images from Unsplash for ${eventType}`);
+      continue;
+    }
 
-    const fetchPortraitImages = await fetch(
-      generateUrl(eventType, "portrait", 6)
-    );
+    for (const event of events) {
+      const cover =
+        landscapeImages[randomIndex(landscapeImages.length)]?.urls?.full;
+      const portrait =
+        portraitImages[randomIndex(portraitImages.length)]?.urls?.full;
 
-    const jsonifiedPortraitImages = await fetchPortraitImages.json();
+      if (!cover || !portrait) continue;
 
-    const portraitImages = jsonifiedPortraitImages.results;
+      const gallery = [
+        landscapeImages[randomIndex(landscapeImages.length)]?.urls?.full,
+        landscapeImages[randomIndex(landscapeImages.length)]?.urls?.full,
+      ].filter(Boolean);
 
-    await prisma.event
-      .updateMany({
-        where: {
-          type: eventType,
-          coverImage: null,
-          portraitImage: null,
-        },
+      await prisma.event.update({
+        where: { id: event.id },
         data: {
-          coverImage:
-            landscapeImages[randomInt(0, landscapeImages.length)]?.urls?.full,
-          portraitImage:
-            portraitImages[randomInt(0, portraitImages.length)].urls.full,
-          galleryImages: [
-            landscapeImages[randomInt(0, landscapeImages.length)].urls.full,
-            landscapeImages[randomInt(0, landscapeImages.length)].urls.full,
-          ],
+          coverImage: cover,
+          portraitImage: portrait,
+          galleryImages: gallery,
         },
-      })
-      .then((res) => {
-        console.log("Updated ", eventType);
       });
-  });
+    }
+
+    console.log(`Updated ${events.length} ${eventType} events`);
+  }
 }
 
-main();
+
+main()
+  .catch(console.error)
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
