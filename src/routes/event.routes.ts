@@ -7,6 +7,9 @@ import { CreateEventSchema, UpdateEventSchema } from "../types";
 const router = Router();
 
 // Protected routes - require authentication
+router.get("/", optionalAuth, eventController.listEvents);
+
+// Protected routes - require authentication
 router.post(
   "/",
   verifyFirebaseToken,

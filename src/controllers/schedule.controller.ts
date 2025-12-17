@@ -73,6 +73,36 @@ export class ScheduleController {
       message: 'Schedule item deleted successfully',
     });
   });
+
+  reorderSchedule = asyncHandler(async (req: Request, res: Response) => {
+    const { eventId, items } = req.body as {
+      eventId: string;
+      items: { id: string; orderIndex: number }[];
+    };
+
+    if (!eventId || !Array.isArray(items)) {
+      res.status(400).json({
+        success: false,
+        error: 'eventId and items array are required',
+      });
+      return;
+    }
+
+    const updatedItems = await scheduleService.reorderScheduleItems(
+      eventId,
+      items
+    );
+
+    const io: Server = req.app.locals.io;
+    if (io) {
+      await emitScheduleUpdate(io, eventId, updatedItems);
+    }
+
+    res.json({
+      success: true,
+      data: updatedItems,
+    });
+  });
 }
 
 export default new ScheduleController();

@@ -130,6 +130,30 @@ export class AnnouncementService {
       },
     });
   }
+
+  async updateAnnouncement(
+    id: string,
+    data: Partial<Pick<CreateAnnouncementInput, 'title' | 'message'>>
+  ) {
+    const announcement = await prisma.announcement.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+    });
+
+    if (!announcement) {
+      throw new AppError('Announcement not found', 404);
+    }
+
+    return prisma.announcement.update({
+      where: { id },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.message !== undefined && { message: data.message }),
+      },
+    });
+  }
 }
 
 export default new AnnouncementService();

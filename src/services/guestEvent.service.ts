@@ -309,6 +309,11 @@ export class GuestEventService {
                 guestEvents: true,
               },
             },
+            admin: {
+              select: {
+                id: true,
+              },
+            },
           },
         },
       },

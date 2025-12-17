@@ -18,6 +18,13 @@ router.get('/user/:userId', verifyFirebaseToken, guestEventController.getGuestEv
 // Get guests by event - requires auth (event admin only ideally, but allowing for now)
 router.get('/event/:eventId', verifyFirebaseToken, guestEventController.getGuestsByEvent);
 
+// Get a specific guest-event relation by user and event - requires auth
+router.get(
+  '/:userId/:eventId',
+  verifyFirebaseToken,
+  guestEventController.getGuestEventByUserAndEvent
+);
+
 // Update guest status - requires auth
 router.patch('/:userId/:eventId/status', verifyFirebaseToken, validate(UpdateGuestStatusSchema), guestEventController.updateGuestStatus);
 

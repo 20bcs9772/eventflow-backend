@@ -112,6 +112,25 @@ export class UserService {
       },
     });
   }
+
+  async listUsers(limit: number = 20, offset: number = 0, search?: string) {
+    return prisma.user.findMany({
+      where: {
+        deletedAt: null,
+        ...(search && {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+          ],
+        }),
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+      skip: offset,
+    });
+  }
 }
 
 export default new UserService();

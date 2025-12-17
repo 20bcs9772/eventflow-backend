@@ -108,6 +108,20 @@ export const swaggerPaths = {
       requestBody: jsonBody,
       responses: createdResponse,
     },
+    get: {
+      tags: ["Users"],
+      summary: "List/search users (admin only)",
+      parameters: [
+        {
+          name: "q",
+          in: "query",
+          required: false,
+          schema: { type: "string" },
+          description: "Search by name or email",
+        },
+      ],
+      responses: okResponse,
+    },
   },
   "/users/{id}": {
     get: {
@@ -127,6 +141,14 @@ export const swaggerPaths = {
       requestBody: jsonBody,
       responses: okResponse,
     },
+    delete: {
+      tags: ["Users"],
+      summary: "Delete user",
+      parameters: [
+        { name: "id", in: "path", required: true, schema: { type: "string" } },
+      ],
+      responses: noContentResponse,
+    },
   },
 
   // Events
@@ -136,6 +158,20 @@ export const swaggerPaths = {
       summary: "Create event",
       requestBody: jsonBody,
       responses: createdResponse,
+    },
+    get: {
+      tags: ["Events"],
+      summary: "List/search accessible events",
+      parameters: [
+        {
+          name: "q",
+          in: "query",
+          required: false,
+          schema: { type: "string" },
+          description: "Search by name, description, or location",
+        },
+      ],
+      responses: okResponse,
     },
   },
   "/events/admin": {
@@ -177,6 +213,13 @@ export const swaggerPaths = {
         { name: "id", in: "path", required: true, schema: { type: "string" } },
       ],
       responses: noContentResponse,
+    },
+  },
+  "/events/types": {
+    get: {
+      tags: ["Events"],
+      summary: "Get types of events",
+      responses: okResponse,
     },
   },
   "/events/types/{type}": {
@@ -270,6 +313,27 @@ export const swaggerPaths = {
       responses: okResponse,
     },
   },
+  "/guests/{userId}/{eventId}": {
+    get: {
+      tags: ["Guest Events"],
+      summary: "Get guest event by user and event",
+      parameters: [
+        {
+          name: "userId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+        {
+          name: "eventId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: okResponse,
+    },
+  },
   "/guests/{userId}/{eventId}/status": {
     patch: {
       tags: ["Guest Events"],
@@ -315,6 +379,12 @@ export const swaggerPaths = {
       summary: "Create schedule item",
       requestBody: jsonBody,
       responses: createdResponse,
+    },
+    patch: {
+      tags: ["Schedule"],
+      summary: "Reorder schedule items",
+      requestBody: jsonBody,
+      responses: okResponse,
     },
   },
   "/schedule/event/{eventId}": {
@@ -443,6 +513,15 @@ export const swaggerPaths = {
       parameters: [
         { name: "id", in: "path", required: true, schema: { type: "string" } },
       ],
+      responses: okResponse,
+    },
+    patch: {
+      tags: ["Announcements"],
+      summary: "Update announcement",
+      parameters: [
+        { name: "id", in: "path", required: true, schema: { type: "string" } },
+      ],
+      requestBody: jsonBody,
       responses: okResponse,
     },
     delete: {

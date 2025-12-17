@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import * as admin from "firebase-admin";
 import { AppError } from "./errorHandler";
+import userService from "../services/user.service";
+import { UserRole } from "@prisma/client";
 
 // Extend Express Request type to include user
 declare global {
@@ -137,11 +139,19 @@ export const requireAdmin = async (
   _res: Response,
   next: NextFunction
 ) => {
-  if (!req.user) {
+  if (!req.user || !req.user.uid) {
     return next(new AppError("Authentication required", 401));
   }
 
-  // This would need to check the database for user role
-  // For now, we'll implement this check in the auth service
-  next();
+  try {
+    const user = await userService.getUserByFirebaseUid(req.user.uid);
+
+    if (!user || user.role !== UserRole.ADMIN) {
+      return next(new AppError("Admin role required", 403));
+    }
+
+    return next();
+  } catch (error) {
+    return next(error);
+  }
 };

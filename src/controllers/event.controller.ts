@@ -26,6 +26,24 @@ const getAdminId = async (req: Request): Promise<string> => {
 };
 
 export class EventController {
+  listEvents = asyncHandler(async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const search = (req.query.q as string) || undefined;
+
+    const events = await eventService.getEvents(
+      req.user as User | null | undefined,
+      limit,
+      offset,
+      search
+    );
+
+    res.json({
+      success: true,
+      data: events,
+    });
+  });
+
   createEvent = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
       const adminId = await getAdminId(req);

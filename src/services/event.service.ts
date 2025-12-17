@@ -57,6 +57,47 @@ const parseTimeString = (dateStr: string, timeStr: string): Date => {
 };
 
 export class EventService {
+  async getEvents(
+    user: User | null | undefined,
+    limit: number = 20,
+    offset: number = 0,
+    search?: string
+  ) {
+    return prisma.event.findMany({
+      where: {
+        ...buildEventAccessWhereClause(user),
+        deletedAt: null,
+        ...(search && {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+            { location: { contains: search, mode: "insensitive" } },
+          ],
+        }),
+      },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        _count: {
+          select: {
+            guestEvents: true,
+            announcements: true,
+          },
+        },
+      },
+      orderBy: {
+        startDate: 'asc',
+      },
+      take: limit,
+      skip: offset,
+    });
+  }
+
   async createEvent(adminId: string, data: CreateEventInput) {
     // Verify admin exists
     const admin = await prisma.user.findUnique({

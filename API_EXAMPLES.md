@@ -4,36 +4,26 @@ This document provides example API requests for the EventFlow backend.
 
 ## Base URL
 ```
-http://localhost:3000
+http://localhost:3000/api
 ```
 
 ## Headers
-For admin operations, include the admin ID in headers:
+Most endpoints use Firebase authentication via Bearer token:
 ```
-x-admin-id: <admin-user-id>
-```
-
-For announcement creation, include the sender ID:
-```
-x-sender-id: <sender-user-id>
-```
-
-For schedule item creation, include the creator ID:
-```
-x-creator-id: <creator-user-id>
+Authorization: Bearer <firebase-id-token>
 ```
 
 ---
 
-## 1. Create Admin User
+## 1. Create User
 
 ```bash
-POST /api/users
+POST /users
 Content-Type: application/json
 
 {
   "email": "admin@example.com",
-  "name": "Event Admin"
+  "name": "Event User"
 }
 ```
 
@@ -45,7 +35,7 @@ Content-Type: application/json
     "id": "uuid-here",
     "email": "admin@example.com",
     "name": "Event Admin",
-    "role": "GUEST",
+  "role": "GUEST",
     "createdAt": "2024-01-01T00:00:00.000Z",
     "deletedAt": null
   }
@@ -57,7 +47,7 @@ Content-Type: application/json
 ## 2. Register Device (FCM Token)
 
 ```bash
-POST /api/devices
+POST /devices
 Content-Type: application/json
 
 {
@@ -88,9 +78,9 @@ Content-Type: application/json
 ## 3. Create Event
 
 ```bash
-POST /api/events
+POST /events
 Content-Type: application/json
-x-admin-id: <admin-user-id>
+Authorization: Bearer <firebase-id-token>
 
 {
   "name": "Summer Wedding 2024",
@@ -133,7 +123,7 @@ x-admin-id: <admin-user-id>
 ## 4. Get Event by Short Code
 
 ```bash
-GET /api/events/shortcode/ABC123XY
+GET /events/code/ABC123XY
 ```
 
 **Response:**
@@ -157,9 +147,9 @@ GET /api/events/shortcode/ABC123XY
 ## 5. Add Schedule Item
 
 ```bash
-POST /api/schedule
+POST /schedule
 Content-Type: application/json
-x-creator-id: <admin-user-id>
+Authorization: Bearer <firebase-id-token>
 
 {
   "eventId": "event-uuid",
@@ -203,7 +193,7 @@ x-creator-id: <admin-user-id>
 
 ### Join by Event ID:
 ```bash
-POST /api/guests/join
+POST /guests/join
 Content-Type: application/json
 
 {
@@ -215,7 +205,7 @@ Content-Type: application/json
 
 ### Join by Short Code:
 ```bash
-POST /api/guests/join
+POST /guests/join
 Content-Type: application/json
 
 {
@@ -258,7 +248,7 @@ Content-Type: application/json
 ## 7. Update Guest Status
 
 ```bash
-PATCH /api/guests/{userId}/{eventId}/status
+PATCH /guests/{userId}/{eventId}/status
 Content-Type: application/json
 
 {
@@ -296,7 +286,7 @@ Content-Type: application/json
 ## 8. Get Event Details (with schedule and announcements)
 
 ```bash
-GET /api/events/{event-id}
+GET /events/{event-id}
 ```
 
 **Response:**
@@ -346,9 +336,9 @@ GET /api/events/{event-id}
 ## 9. Create Announcement (triggers Socket.IO + push notification)
 
 ```bash
-POST /api/announcements
+POST /announcements
 Content-Type: application/json
-x-sender-id: <admin-user-id>
+Authorization: Bearer <firebase-id-token>
 
 {
   "eventId": "event-uuid",
@@ -388,7 +378,7 @@ x-sender-id: <admin-user-id>
 ## 10. Get Schedule Items for Event
 
 ```bash
-GET /api/schedule/event/{event-id}
+GET /schedule/event/{event-id}
 ```
 
 **Response:**
@@ -421,7 +411,7 @@ GET /api/schedule/event/{event-id}
 ## 11. Get Announcements for Event
 
 ```bash
-GET /api/announcements/event/{event-id}
+GET /announcements/event/{event-id}
 ```
 
 **Response:**
@@ -448,7 +438,7 @@ GET /api/announcements/event/{event-id}
 ## 12. Update Schedule Item
 
 ```bash
-PATCH /api/schedule/{schedule-item-id}
+PATCH /schedule/{schedule-item-id}
 Content-Type: application/json
 
 {
@@ -460,13 +450,19 @@ Content-Type: application/json
 
 ---
 
-## 13. Get Events for Admin
+## 13. Reorder Schedule Items for Event
 
 ```bash
-GET /api/events/admin?adminId={admin-user-id}
-# OR
-GET /api/events/admin
-x-admin-id: {admin-user-id}
+PATCH /schedule/reorder
+Content-Type: application/json
+
+{
+  "eventId": "event-uuid",
+  "items": [
+    { "id": "schedule-uuid-1", "orderIndex": 1 },
+    { "id": "schedule-uuid-2", "orderIndex": 0 }
+  ]
+}
 ```
 
 ---
@@ -474,7 +470,7 @@ x-admin-id: {admin-user-id}
 ## 14. Get Devices for User
 
 ```bash
-GET /api/devices/user/{user-id}
+GET /devices/user/{user-id}
 ```
 
 **Response:**

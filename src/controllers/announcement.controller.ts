@@ -55,6 +55,18 @@ export class AnnouncementController {
     });
   });
 
+  updateAnnouncement = asyncHandler(async (req: Request, res: Response) => {
+    const announcement = await announcementService.updateAnnouncement(
+      req.params.id,
+      req.body
+    );
+
+    res.json({
+      success: true,
+      data: announcement,
+    });
+  });
+
   deleteAnnouncement = asyncHandler(async (req: Request, res: Response) => {
     await announcementService.deleteAnnouncement(req.params.id);
     res.json({

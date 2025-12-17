@@ -204,6 +204,49 @@ export class ScheduleService {
       },
     });
   }
+
+  async reorderScheduleItems(
+    eventId: string,
+    items: { id: string; orderIndex: number }[]
+  ) {
+    // Verify event exists
+    const event = await prisma.event.findFirst({
+      where: {
+        id: eventId,
+        deletedAt: null,
+      },
+    });
+
+    if (!event) {
+      throw new AppError('Event not found', 404);
+    }
+
+    // Ensure all items belong to this event
+    const ids = items.map((i) => i.id);
+    const existingItems = await prisma.scheduleItem.findMany({
+      where: {
+        id: { in: ids },
+        eventId,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (existingItems.length !== items.length) {
+      throw new AppError('One or more schedule items are invalid', 400);
+    }
+
+    await prisma.$transaction(
+      items.map((item) =>
+        prisma.scheduleItem.update({
+          where: { id: item.id },
+          data: { orderIndex: item.orderIndex },
+        })
+      )
+    );
+
+    return this.getScheduleItemsByEvent(eventId);
+  }
 }
 
 export default new ScheduleService();
