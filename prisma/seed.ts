@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { customAlphabet } from "nanoid";
+import { getImagesForEventType } from "./updateDB";
 
 const prisma = new PrismaClient();
 
@@ -308,6 +309,7 @@ async function main() {
   const weddingEnd = new Date(weddingStart);
   weddingEnd.setHours(22, 0, 0, 0);
 
+  const weddingImages = await getImagesForEventType("WEDDING");
   const wedding = await prisma.event.create({
     data: {
       name: "Summer Garden Wedding",
@@ -320,6 +322,7 @@ async function main() {
       visibility: "PUBLIC",
       type: "WEDDING",
       adminId: admin1.id,
+      ...(weddingImages || {}),
     },
   });
   events.push(wedding);
@@ -331,6 +334,7 @@ async function main() {
   const birthdayEnd = new Date(birthdayStart);
   birthdayEnd.setHours(23, 0, 0, 0);
 
+  const birthdayImages = await getImagesForEventType("BIRTHDAY");
   const birthday = await prisma.event.create({
     data: {
       name: "30th Birthday Bash",
@@ -342,6 +346,7 @@ async function main() {
       visibility: "PUBLIC",
       type: "BIRTHDAY",
       adminId: admin2.id,
+      ...(birthdayImages || {}),
     },
   });
   events.push(birthday);
@@ -354,6 +359,7 @@ async function main() {
   const corporateEnd = new Date(corporateStart);
   corporateEnd.setHours(17, 0, 0, 0);
 
+  const corporateImages = await getImagesForEventType("CORPORATE");
   const corporate = await prisma.event.create({
     data: {
       name: "Annual Tech Conference 2024",
@@ -366,6 +372,7 @@ async function main() {
       visibility: "PUBLIC",
       type: "CORPORATE",
       adminId: admin3.id,
+      ...(corporateImages || {}),
     },
   });
   events.push(corporate);
@@ -379,6 +386,7 @@ async function main() {
   festEnd.setDate(festEnd.getDate() + 2);
   festEnd.setHours(22, 0, 0, 0);
 
+  const collegeFestImages = await getImagesForEventType("COLLEGE_FEST");
   const collegeFest = await prisma.event.create({
     data: {
       name: "Spring Music Festival",
@@ -391,6 +399,7 @@ async function main() {
       visibility: "PUBLIC",
       type: "COLLEGE_FEST",
       adminId: admin1.id,
+      ...(collegeFestImages || {}),
     },
   });
   events.push(collegeFest);
@@ -402,6 +411,7 @@ async function main() {
   const privateEnd = new Date(privateStart);
   privateEnd.setHours(23, 0, 0, 0);
 
+  const privateEventImages = await getImagesForEventType("OTHER");
   const privateEvent = await prisma.event.create({
     data: {
       name: "Exclusive VIP Dinner",
@@ -413,6 +423,7 @@ async function main() {
       visibility: "PRIVATE",
       type: "OTHER",
       adminId: admin2.id,
+      ...(privateEventImages || {}),
     },
   });
   events.push(privateEvent);
@@ -654,6 +665,7 @@ async function main() {
     const eventEnd = new Date(eventStart);
     eventEnd.setHours(eventEnd.getHours() + template.duration);
 
+    const eventImages = await getImagesForEventType(template.type);
     const newEvent = await prisma.event.create({
       data: {
         name: template.name,
@@ -665,6 +677,7 @@ async function main() {
         visibility: template.visibility,
         type: template.type,
         adminId: template.admin.id,
+        ...(eventImages || {}),
       },
     });
     events.push(newEvent);
@@ -1154,6 +1167,7 @@ async function main() {
     const eventEnd = new Date(eventStart);
     eventEnd.setHours(eventStart.getHours() + template.duration);
 
+    const eventImages = await getImagesForEventType(template.type);
     const newEvent = await prisma.event.create({
       data: {
         name: template.name,
@@ -1165,6 +1179,7 @@ async function main() {
         visibility: template.visibility,
         type: template.type,
         adminId: template.admin.id,
+        ...(eventImages || {}),
       },
     });
     events.push(newEvent);

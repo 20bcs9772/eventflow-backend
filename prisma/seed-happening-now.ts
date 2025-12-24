@@ -1,6 +1,7 @@
 // prisma/seed-happening-now.ts
 import { PrismaClient } from "@prisma/client";
 import { customAlphabet } from "nanoid";
+import { getImagesForEventType } from "./updateDB";
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 8);
 
 const generateShortCode = async (): Promise<string> => {
@@ -271,6 +272,9 @@ async function main() {
     const eventEnd = new Date(eventStart);
     eventEnd.setHours(eventEnd.getHours() + template.duration);
 
+    // Get images for this event type
+    const eventImages = await getImagesForEventType(template.type);
+
     // Create event
     const event = await prisma.event.create({
       data: {
@@ -283,6 +287,7 @@ async function main() {
         type: template.type as any,
         location: template.location,
         adminId: template.admin.id,
+        ...(eventImages || {}),
       },
     });
 
