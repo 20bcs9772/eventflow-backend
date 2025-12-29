@@ -171,20 +171,6 @@ export const UpdateGuestStatusSchema = z.object({
 export type JoinEventInput = z.infer<typeof JoinEventSchema>;
 export type UpdateGuestStatusInput = z.infer<typeof UpdateGuestStatusSchema>;
 
-// Socket.IO Event Types
-export interface ServerToClientEvents {
-  scheduleUpdated: (data: { eventId: string; scheduleItem: unknown }) => void;
-  announcement: (data: { eventId: string; announcement: unknown }) => void;
-  eventUpdated: (data: { eventId: string; event: unknown }) => void;
-  joined: (data: { eventId: string; success: boolean }) => void;
-  error: (data: { message: string }) => void;
-}
-
-export interface ClientToServerEvents {
-  joinEvent: (eventId: string) => void;
-  leaveEvent: (eventId: string) => void;
-}
-
 export type EventType =
   | "WEDDING"
   | "BIRTHDAY"

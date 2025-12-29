@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
-import { Server } from "socket.io";
 import eventService from "../services/event.service";
+import notificationService from "../services/notification.service";
 import { asyncHandler } from "../middleware/errorHandler";
-import { emitEventUpdate } from "../socket/socketHandlers";
 import userService from "../services/user.service";
 import { AppError } from "../middleware/errorHandler";
 import { User } from "@prisma/client";
@@ -116,11 +115,8 @@ export class EventController {
         req.body
       );
 
-      // Emit Socket.IO event
-      const io: Server = req.app.locals.io;
-      if (io) {
-        emitEventUpdate(io, event.id, event);
-      }
+      // Send push notifications via FCM
+      await notificationService.sendEventUpdateNotification(event.id, event);
 
       res.json({
         success: true,

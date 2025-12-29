@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import deviceService from '../services/device.service';
 import { asyncHandler } from '../middleware/errorHandler';
-import { validate } from '../middleware/validation';
-import { CreateDeviceSchema, UpdateDeviceSchema } from '../types';
 
 export class DeviceController {
   createDevice = asyncHandler(async (req: Request, res: Response) => {

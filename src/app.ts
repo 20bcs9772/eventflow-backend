@@ -4,7 +4,6 @@ import helmet from "helmet";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import { createServer } from "http";
-import { Server } from "socket.io";
 import { errorHandler } from "./middleware/errorHandler";
 import { initializeFirebase } from "./config/firebase";
 import swaggerUi from "swagger-ui-express";
@@ -19,22 +18,11 @@ import announcementRoutes from "./routes/announcement.routes";
 import guestEventRoutes from "./routes/guestEvent.routes";
 import deviceRoutes from "./routes/device.routes";
 
-// Socket handlers
-import { setupSocketHandlers } from "./socket/socketHandlers";
 // Load environment variables
 dotenv.config();
 
 const app: Express = express();
 const httpServer = createServer(app);
-
-// Initialize Socket.IO
-const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.CORS_ORIGIN?.split(",") || "*",
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
 
 // Initialize Firebase Admin SDK
 try {
@@ -83,13 +71,7 @@ app.get("/api/docs.json", (_req, res) => {
   res.json(swaggerSpecs);
 });
 
-// Setup Socket.IO handlers
-setupSocketHandlers(io);
-
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-// Make io available to routes via app.locals
-app.locals.io = io;
-
-export { app, httpServer, io };
+export { app, httpServer };

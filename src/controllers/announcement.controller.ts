@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { Server } from 'socket.io';
 import announcementService from '../services/announcement.service';
+import notificationService from '../services/notification.service';
 import { asyncHandler } from '../middleware/errorHandler';
-import { emitAnnouncement } from '../socket/socketHandlers';
 
 // In a real app, you'd get senderId from authentication middleware
 // For MVP, we'll accept it as a query parameter or header
@@ -27,11 +26,15 @@ export class AnnouncementController {
 
     const announcement = await announcementService.createAnnouncement(senderId, req.body);
     
-    // Emit Socket.IO event and send push notifications
-    const io: Server = req.app.locals.io;
-    if (io) {
-      await emitAnnouncement(io, announcement.eventId, announcement);
-    }
+    // Send push notifications via FCM
+    await notificationService.sendAnnouncementNotification(
+      announcement.eventId,
+      {
+        id: announcement.id,
+        title: announcement.title,
+        message: announcement.message,
+      }
+    );
 
     res.status(201).json({
       success: true,
