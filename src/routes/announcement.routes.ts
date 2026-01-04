@@ -8,6 +8,7 @@ const router = Router();
 router.post('/', validate(CreateAnnouncementSchema), announcementController.createAnnouncement);
 router.get('/event/:eventId', announcementController.getAnnouncementsByEvent);
 router.get('/:id', announcementController.getAnnouncementById);
+router.patch('/:id', announcementController.updateAnnouncement);
 router.delete('/:id', announcementController.deleteAnnouncement);
 
 export default router;

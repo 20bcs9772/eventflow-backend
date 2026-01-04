@@ -68,6 +68,43 @@ export class GuestEventController {
     });
   });
 
+  getGuestEventByUserAndEvent = asyncHandler(
+    async (req: Request, res: Response) => {
+      const { userId, eventId } = req.params;
+
+      if (!req.user || !req.user.uid) {
+        throw new AppError('User not authenticated', 401);
+      }
+
+      const currentUser = await userService.getUserByFirebaseUid(req.user.uid);
+      if (!currentUser) {
+        throw new AppError('User not found', 404);
+      }
+
+      const guestEvent = await guestEventService.getGuestEventByUserAndEvent(
+        userId,
+        eventId
+      );
+
+      if (!guestEvent) {
+        throw new AppError('Guest event not found', 404);
+      }
+
+      // Allow access if requesting own record or event admin
+      if (
+        currentUser.id !== userId &&
+        guestEvent.event.admin.id !== currentUser.id
+      ) {
+        throw new AppError('Forbidden', 403);
+      }
+
+      res.json({
+        success: true,
+        data: guestEvent,
+      });
+    }
+  );
+
   leaveEvent = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user || !req.user.uid) {
       throw new AppError('User not authenticated', 401);

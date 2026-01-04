@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { Server } from 'socket.io';
 import scheduleService from '../services/schedule.service';
+import notificationService from '../services/notification.service';
 import { asyncHandler } from '../middleware/errorHandler';
-import { emitScheduleUpdate } from '../socket/socketHandlers';
 
 // Get creator ID from header or body
 const getCreatorId = (req: Request): string => {
@@ -23,11 +22,11 @@ export class ScheduleController {
 
     const scheduleItem = await scheduleService.createScheduleItem(createdBy, req.body);
     
-    // Emit Socket.IO event
-    const io: Server = req.app.locals.io;
-    if (io) {
-      await emitScheduleUpdate(io, scheduleItem.eventId, scheduleItem);
-    }
+    // Send push notifications via FCM
+    await notificationService.sendScheduleUpdateNotification(
+      scheduleItem.eventId,
+      scheduleItem
+    );
 
     res.status(201).json({
       success: true,
@@ -54,11 +53,11 @@ export class ScheduleController {
   updateScheduleItem = asyncHandler(async (req: Request, res: Response) => {
     const scheduleItem = await scheduleService.updateScheduleItem(req.params.id, req.body);
     
-    // Emit Socket.IO event
-    const io: Server = req.app.locals.io;
-    if (io) {
-      await emitScheduleUpdate(io, scheduleItem.eventId, scheduleItem);
-    }
+    // Send push notifications via FCM
+    await notificationService.sendScheduleUpdateNotification(
+      scheduleItem.eventId,
+      scheduleItem
+    );
 
     res.json({
       success: true,
@@ -71,6 +70,37 @@ export class ScheduleController {
     res.json({
       success: true,
       message: 'Schedule item deleted successfully',
+    });
+  });
+
+  reorderSchedule = asyncHandler(async (req: Request, res: Response) => {
+    const { eventId, items } = req.body as {
+      eventId: string;
+      items: { id: string; orderIndex: number }[];
+    };
+
+    if (!eventId || !Array.isArray(items)) {
+      res.status(400).json({
+        success: false,
+        error: 'eventId and items array are required',
+      });
+      return;
+    }
+
+    const updatedItems = await scheduleService.reorderScheduleItems(
+      eventId,
+      items
+    );
+
+    // Send push notifications via FCM
+    await notificationService.sendScheduleUpdateNotification(
+      eventId,
+      updatedItems
+    );
+
+    res.json({
+      success: true,
+      data: updatedItems,
     });
   });
 }

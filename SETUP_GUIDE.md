@@ -103,18 +103,18 @@ CORS_ORIGIN=http://localhost:3000,http://localhost:5173
 npm run dev
 ```
 
-The server should start on `http://localhost:3000`
+The server should start on `http://localhost:3000` and expose the API under `/api`.
 
 ### 7. Verify Setup
 
 1. **Check health endpoint:**
    ```bash
-   curl http://localhost:3000/health
+   curl http://localhost:3000/api/health
    ```
 
-2. **Test database connection:**
-   - The server logs should show "✅ Database connected successfully"
-   - If Firebase is configured, you should see "Firebase Admin initialized..."
+2. **Test database connection & Firebase (via logs):**
+   - The server logs should show DB connection success (or Prisma migration output)
+   - If Firebase is configured, you should see Firebase Admin initialization logs
 
 ## Troubleshooting
 

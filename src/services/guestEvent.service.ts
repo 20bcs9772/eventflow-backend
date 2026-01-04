@@ -8,17 +8,10 @@ export class GuestEventService {
     let event;
 
     // Find event by ID or shortCode
-    if (data.eventId) {
+    if (data.eventId || data.shortCode) {
       event = await prisma.event.findFirst({
         where: {
-          id: data.eventId,
-          deletedAt: null,
-        },
-      });
-    } else if (data.shortCode) {
-      event = await prisma.event.findFirst({
-        where: {
-          shortCode: data.shortCode,
+          OR: [{ id: data?.eventId }, { shortCode: data?.shortCode }],
           deletedAt: null,
         },
       });
@@ -287,6 +280,45 @@ export class GuestEventService {
             name: true,
           },
         },
+      },
+    });
+  }
+
+  async getGuestEventByUserAndEvent(userId: string, eventId: string) {
+    return prisma.guestEvent.findFirst({
+      where: {
+        userId,
+        eventId,
+        deletedAt: null,
+        user: {
+          deletedAt: null,
+        },
+        event: {
+          deletedAt: null,
+        },
+      },
+      include: {
+        event: {
+          include: {
+            scheduleItems: {
+              where: { deletedAt: null },
+              orderBy: [{ orderIndex: "asc" }, { startTime: "asc" }],
+            },
+            _count: {
+              select: {
+                guestEvents: true,
+              },
+            },
+            admin: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        joinedAt: "desc",
       },
     });
   }

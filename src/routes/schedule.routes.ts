@@ -10,6 +10,7 @@ router.get('/event/:eventId', scheduleController.getScheduleItemsByEvent);
 router.get('/:id', scheduleController.getScheduleItemById);
 router.patch('/:id', validate(UpdateScheduleItemSchema), scheduleController.updateScheduleItem);
 router.delete('/:id', scheduleController.deleteScheduleItem);
+router.patch('/reorder', scheduleController.reorderSchedule);
 
 export default router;
 
