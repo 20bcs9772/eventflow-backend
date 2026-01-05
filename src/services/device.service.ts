@@ -1,5 +1,9 @@
 import prisma from "../config/database";
-import { CreateDeviceInput, UpdateDeviceInput } from "../types";
+import {
+  CreateDeviceInput,
+  DeleteDeviceInput,
+  UpdateDeviceInput,
+} from "../types";
 import { AppError } from "../middleware/errorHandler";
 
 export class DeviceService {
@@ -29,7 +33,6 @@ export class DeviceService {
         return prisma.device.update({
           where: { id: existingDevice.id },
           data: {
-            deviceType: data.deviceType,
             fcmToken: data.fcmToken,
             deletedAt: null,
           },
@@ -83,7 +86,12 @@ export class DeviceService {
 
   async updateDevice(id: string, data: UpdateDeviceInput) {
     const device = await prisma.device.findUnique({
-      where: { id },
+      where: {
+        userId_deviceId: {
+          userId: data.userId,
+          deviceId: id,
+        },
+      },
     });
 
     if (!device || device.deletedAt) {
@@ -91,16 +99,21 @@ export class DeviceService {
     }
 
     return prisma.device.update({
-      where: { id },
+      where: { id: device.id },
       data: {
         ...(data.fcmToken && { fcmToken: data.fcmToken }),
       },
     });
   }
 
-  async deleteDevice(id: string) {
+  async deleteDevice(id: string, data: DeleteDeviceInput) {
     const device = await prisma.device.findUnique({
-      where: { id },
+      where: {
+        userId_deviceId: {
+          userId: data.userId,
+          deviceId: id,
+        },
+      },
     });
 
     if (!device || device.deletedAt) {
@@ -109,7 +122,7 @@ export class DeviceService {
 
     // Soft delete
     return prisma.device.update({
-      where: { id },
+      where: { id: device.id },
       data: {
         deletedAt: new Date(),
       },

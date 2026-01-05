@@ -36,7 +36,7 @@ export class DeviceController {
   });
 
   deleteDevice = asyncHandler(async (req: Request, res: Response) => {
-    await deviceService.deleteDevice(req.params.id);
+    await deviceService.deleteDevice(req.params.id, req.body);
     res.json({
       success: true,
       message: 'Device deleted successfully',
