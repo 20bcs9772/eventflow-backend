@@ -30,6 +30,7 @@ export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
 export const CreateDeviceSchema = z.object({
   userId: z.string().uuid(),
   fcmToken: z.string().min(1),
+  deviceId: z.string(),
   deviceType: z.enum(["IOS", "ANDROID", "WEB"]),
 });
 

@@ -148,6 +148,7 @@ export class AuthService {
           select: {
             id: true,
             deviceType: true,
+            deviceId: true,
             createdAt: true,
           },
         },

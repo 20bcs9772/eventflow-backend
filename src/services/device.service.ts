@@ -1,6 +1,6 @@
-import prisma from '../config/database';
-import { CreateDeviceInput, UpdateDeviceInput } from '../types';
-import { AppError } from '../middleware/errorHandler';
+import prisma from "../config/database";
+import { CreateDeviceInput, UpdateDeviceInput } from "../types";
+import { AppError } from "../middleware/errorHandler";
 
 export class DeviceService {
   async createDevice(data: CreateDeviceInput) {
@@ -10,15 +10,15 @@ export class DeviceService {
     });
 
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
     }
 
     // Check if device already exists
     const existingDevice = await prisma.device.findUnique({
       where: {
-        userId_fcmToken: {
+        userId_deviceId: {
           userId: data.userId,
-          fcmToken: data.fcmToken,
+          deviceId: data.deviceId,
         },
       },
     });
@@ -30,6 +30,7 @@ export class DeviceService {
           where: { id: existingDevice.id },
           data: {
             deviceType: data.deviceType,
+            fcmToken: data.fcmToken,
             deletedAt: null,
           },
         });
@@ -42,6 +43,7 @@ export class DeviceService {
         userId: data.userId,
         fcmToken: data.fcmToken,
         deviceType: data.deviceType,
+        deviceId: data.deviceId,
       },
     });
   }
@@ -61,7 +63,7 @@ export class DeviceService {
     });
 
     if (!device || device.deletedAt) {
-      throw new AppError('Device not found', 404);
+      throw new AppError("Device not found", 404);
     }
 
     return device;
@@ -74,7 +76,7 @@ export class DeviceService {
         deletedAt: null,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }
@@ -85,14 +87,13 @@ export class DeviceService {
     });
 
     if (!device || device.deletedAt) {
-      throw new AppError('Device not found', 404);
+      throw new AppError("Device not found", 404);
     }
 
     return prisma.device.update({
       where: { id },
       data: {
         ...(data.fcmToken && { fcmToken: data.fcmToken }),
-        ...(data.deviceType && { deviceType: data.deviceType }),
       },
     });
   }
@@ -103,7 +104,7 @@ export class DeviceService {
     });
 
     if (!device || device.deletedAt) {
-      throw new AppError('Device not found', 404);
+      throw new AppError("Device not found", 404);
     }
 
     // Soft delete
@@ -158,4 +159,3 @@ export class DeviceService {
 }
 
 export default new DeviceService();
-
