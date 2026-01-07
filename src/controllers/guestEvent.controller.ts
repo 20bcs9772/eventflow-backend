@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
-import guestEventService from '../services/guestEvent.service';
-import { asyncHandler } from '../middleware/errorHandler';
-import userService from '../services/user.service';
-import { AppError } from '../middleware/errorHandler';
+import { Request, Response } from "express";
+import guestEventService from "../services/guestEvent.service";
+import { asyncHandler } from "../middleware/errorHandler";
+import userService from "../services/user.service";
+import { AppError } from "../middleware/errorHandler";
+import notificationService from "../services/notification.service";
 
 // Get user database ID from Firebase UID
 const getUserId = async (req: Request): Promise<string | null> => {
@@ -23,6 +24,14 @@ export class GuestEventController {
     };
 
     const guestEvent = await guestEventService.joinEvent(joinData);
+
+    if (guestEvent) {
+      await notificationService.sendEventJoinedNotification(
+        guestEvent.eventId as string,
+        guestEvent?.user.name as string
+      );
+    }
+
     res.status(201).json({
       success: true,
       data: guestEvent,
@@ -35,13 +44,13 @@ export class GuestEventController {
     if (!userId && req.user) {
       const user = await userService.getUserByFirebaseUid(req.user.uid);
       if (!user) {
-        throw new AppError('User not found', 404);
+        throw new AppError("User not found", 404);
       }
       userId = user.id;
     }
-    
+
     if (!userId) {
-      throw new AppError('User ID is required', 400);
+      throw new AppError("User ID is required", 400);
     }
 
     const guestEvents = await guestEventService.getGuestEventsByUser(userId);
@@ -61,7 +70,11 @@ export class GuestEventController {
 
   updateGuestStatus = asyncHandler(async (req: Request, res: Response) => {
     const { userId, eventId } = req.params;
-    const guestEvent = await guestEventService.updateGuestStatus(userId, eventId, req.body);
+    const guestEvent = await guestEventService.updateGuestStatus(
+      userId,
+      eventId,
+      req.body
+    );
     res.json({
       success: true,
       data: guestEvent,
@@ -73,12 +86,12 @@ export class GuestEventController {
       const { userId, eventId } = req.params;
 
       if (!req.user || !req.user.uid) {
-        throw new AppError('User not authenticated', 401);
+        throw new AppError("User not authenticated", 401);
       }
 
       const currentUser = await userService.getUserByFirebaseUid(req.user.uid);
       if (!currentUser) {
-        throw new AppError('User not found', 404);
+        throw new AppError("User not found", 404);
       }
 
       const guestEvent = await guestEventService.getGuestEventByUserAndEvent(
@@ -87,7 +100,7 @@ export class GuestEventController {
       );
 
       if (!guestEvent) {
-        throw new AppError('Guest event not found', 404);
+        throw new AppError("Guest event not found", 404);
       }
 
       // Allow access if requesting own record or event admin
@@ -95,7 +108,7 @@ export class GuestEventController {
         currentUser.id !== userId &&
         guestEvent.event.admin.id !== currentUser.id
       ) {
-        throw new AppError('Forbidden', 403);
+        throw new AppError("Forbidden", 403);
       }
 
       res.json({
@@ -107,19 +120,19 @@ export class GuestEventController {
 
   leaveEvent = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user || !req.user.uid) {
-      throw new AppError('User not authenticated', 401);
+      throw new AppError("User not authenticated", 401);
     }
 
     const user = await userService.getUserByFirebaseUid(req.user.uid);
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
     }
 
     const { eventId } = req.params;
     await guestEventService.leaveEvent(user.id, eventId);
     res.json({
       success: true,
-      message: 'Left event successfully',
+      message: "Left event successfully",
     });
   });
 }
