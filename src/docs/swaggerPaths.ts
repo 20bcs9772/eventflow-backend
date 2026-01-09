@@ -1134,7 +1134,16 @@ export const swaggerPaths = {
     post: {
       tags: ["Announcements"],
       summary: "Create announcement",
-      description: "Create a new announcement for an event",
+      description: "Create a new announcement for an event. Requires x-sender-id header or senderId in body/query.",
+      parameters: [
+        {
+          name: "x-sender-id",
+          in: "header",
+          required: false,
+          schema: { type: "string", format: "uuid" },
+          description: "User ID of the announcement sender (alternative to senderId in body/query)",
+        },
+      ],
       requestBody: {
         required: true,
         content: {
@@ -1146,12 +1155,23 @@ export const swaggerPaths = {
                 eventId: { type: "string", format: "uuid" },
                 title: { type: "string", minLength: 1 },
                 message: { type: "string", minLength: 1 },
+                senderId: {
+                  type: "string",
+                  format: "uuid",
+                  description: "User ID of the sender (alternative to x-sender-id header)",
+                },
               },
             },
           },
         },
       },
       responses: createdResponse,
+    },
+    get: {
+      tags: ["Announcements"],
+      summary: "Get user announcements",
+      description: "Get all announcements for events the authenticated user is attending",
+      responses: okResponse,
     },
   },
   "/announcements/event/{eventId}": {
@@ -1219,7 +1239,7 @@ export const swaggerPaths = {
     delete: {
       tags: ["Announcements"],
       summary: "Delete announcement",
-      description: "Delete an announcement",
+      description: "Delete an announcement (soft delete)",
       parameters: [
         {
           name: "id",
@@ -1229,7 +1249,23 @@ export const swaggerPaths = {
           description: "Announcement ID",
         },
       ],
-      responses: noContentResponse,
+      responses: {
+        "200": {
+          description: "Announcement deleted successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  message: { type: "string", example: "Announcement deleted successfully" },
+                },
+              },
+            },
+          },
+        },
+        ...errorResponse,
+      },
     },
   },
 };
