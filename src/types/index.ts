@@ -30,16 +30,22 @@ export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
 export const CreateDeviceSchema = z.object({
   userId: z.string().uuid(),
   fcmToken: z.string().min(1),
+  deviceId: z.string(),
   deviceType: z.enum(["IOS", "ANDROID", "WEB"]),
 });
 
 export const UpdateDeviceSchema = z.object({
-  fcmToken: z.string().min(1).optional(),
-  deviceType: z.enum(["IOS", "ANDROID", "WEB"]).optional(),
+  fcmToken: z.string().min(1),
+  userId: z.string().uuid(),
+});
+
+export const DeleteDeviceSchema = z.object({
+  userId: z.string().uuid(),
 });
 
 export type CreateDeviceInput = z.infer<typeof CreateDeviceSchema>;
 export type UpdateDeviceInput = z.infer<typeof UpdateDeviceSchema>;
+export type DeleteDeviceInput = z.infer<typeof DeleteDeviceSchema>;
 
 // Event Types - Venue schema
 const VenueSchema = z

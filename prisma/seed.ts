@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 
 // Generate unique short code (same as in event.service.ts)
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 8);
+const generateDeviceId = customAlphabet("qwertyuiopasdfghjklzxcvbnm", 10);
 
 const generateShortCode = async (): Promise<string> => {
   let shortCode: string;
@@ -265,6 +266,7 @@ async function main() {
           userId: admin.id,
           fcmToken: `fcm-token-${admin.id}-${i}-${Date.now()}`,
           deviceType: deviceTypes[i % 3],
+          deviceId: generateDeviceId(),
         },
       });
       deviceCount++;
@@ -279,6 +281,7 @@ async function main() {
         userId: guests[i].id,
         fcmToken: `fcm-token-${guests[i].id}-1-${Date.now()}`,
         deviceType: deviceTypes[i % 3],
+        deviceId: generateDeviceId(),
       },
     });
     deviceCount++;
@@ -290,6 +293,7 @@ async function main() {
           userId: guests[i].id,
           fcmToken: `fcm-token-${guests[i].id}-2-${Date.now()}`,
           deviceType: deviceTypes[(i + 1) % 3],
+          deviceId: generateDeviceId(),
         },
       });
       deviceCount++;

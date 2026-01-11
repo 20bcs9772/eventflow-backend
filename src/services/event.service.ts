@@ -91,7 +91,7 @@ export class EventService {
         },
       },
       orderBy: {
-        startDate: 'asc',
+        startDate: "asc",
       },
       take: limit,
       skip: offset,
@@ -250,11 +250,15 @@ export class EventService {
     });
   }
 
-  async getEventById(id: string, user: User | null | undefined) {
+  async getEventById(
+    id: string,
+    user: User | null | undefined,
+    overrideAccess: boolean = false
+  ) {
     const event = await prisma.event.findFirst({
       where: {
         id,
-        ...buildEventAccessWhereClause(user),
+        ...(overrideAccess ? {} : buildEventAccessWhereClause(user)),
         deletedAt: null,
       },
       include: {
