@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Auth Types
 export const RegisterSchema = z.object({
@@ -30,33 +30,74 @@ export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
 export const CreateDeviceSchema = z.object({
   userId: z.string().uuid(),
   fcmToken: z.string().min(1),
-  deviceType: z.enum(['IOS', 'ANDROID', 'WEB']),
+  deviceId: z.string(),
+  deviceType: z.enum(["IOS", "ANDROID", "WEB"]),
 });
 
 export const UpdateDeviceSchema = z.object({
-  fcmToken: z.string().min(1).optional(),
-  deviceType: z.enum(['IOS', 'ANDROID', 'WEB']).optional(),
+  fcmToken: z.string().min(1),
+  userId: z.string().uuid(),
+});
+
+export const DeleteDeviceSchema = z.object({
+  userId: z.string().uuid(),
 });
 
 export type CreateDeviceInput = z.infer<typeof CreateDeviceSchema>;
 export type UpdateDeviceInput = z.infer<typeof UpdateDeviceSchema>;
+export type DeleteDeviceInput = z.infer<typeof DeleteDeviceSchema>;
+
+// Event Types - Venue schema
+const VenueSchema = z
+  .object({
+    name: z.string().optional(),
+    fullAddress: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional(),
+  })
+  .optional();
+
+// Schedule item for event creation
+const ScheduleItemForEventSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  startTime: z.string(), // ISO datetime string
+  endTime: z.string(), // ISO datetime string
+  location: z.string().optional(),
+  orderIndex: z.number().int().min(0).optional(),
+});
 
 // Event Types
-export const CreateEventSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime(),
-  location: z.string().optional(),
-  visibility: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),
-  type: z.enum(['WEDDING', 'BIRTHDAY', 'CORPORATE', 'COLLEGE_FEST', 'OTHER']).optional(),
-}).refine(
-  (data) => new Date(data.startDate).getTime() < new Date(data.endDate).getTime(),
-  {
-    message: "endDate must be after startDate",
-    path: ["endDate"],
-  }
-);
+export const CreateEventSchema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    startDate: z.string().datetime(),
+    endDate: z.string().datetime(),
+    startTime: z.string().optional(), // Time string like "9:00 AM"
+    endTime: z.string().optional(), // Time string like "5:00 PM"
+    timeZone: z.string().optional(),
+    location: z.string().optional(),
+    coverImage: z.string().optional(),
+    portraitImage: z.string().optional(),
+    galleryImages: z.array(z.string()).optional(),
+    venue: VenueSchema, // Detailed venue object
+    visibility: z.enum(["PUBLIC", "PRIVATE", "UNLISTED"]).optional(),
+    type: z
+      .enum(["WEDDING", "BIRTHDAY", "CORPORATE", "COLLEGE_FEST", "OTHER"])
+      .optional(),
+    scheduleItems: z.array(ScheduleItemForEventSchema).optional(), // Schedule items to create with event
+  })
+  .refine(
+    (data) =>
+      new Date(data.startDate).getTime() < new Date(data.endDate).getTime(),
+    {
+      message: "endDate must be after startDate",
+      path: ["endDate"],
+    }
+  );
 
 export const UpdateEventSchema = z.object({
   name: z.string().min(1).optional(),
@@ -64,8 +105,13 @@ export const UpdateEventSchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   location: z.string().optional(),
-  visibility: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),
-  type: z.enum(['WEDDING', 'BIRTHDAY', 'CORPORATE', 'COLLEGE_FEST', 'OTHER']).optional(),
+  coverImage: z.string().optional(),
+  portraitImage: z.string().optional(),
+  galleryImages: z.array(z.string()).optional(),
+  visibility: z.enum(["PUBLIC", "PRIVATE", "UNLISTED"]).optional(),
+  type: z
+    .enum(["WEDDING", "BIRTHDAY", "CORPORATE", "COLLEGE_FEST", "OTHER"])
+    .optional(),
 });
 
 export type CreateEventInput = z.infer<typeof CreateEventSchema>;
@@ -84,7 +130,9 @@ const ScheduleItemBaseSchema = z.object({
 
 export const CreateScheduleItemSchema = ScheduleItemBaseSchema.refine(
   (data: z.infer<typeof ScheduleItemBaseSchema>) => {
-    return new Date(data.startTime).getTime() < new Date(data.endTime).getTime();
+    return (
+      new Date(data.startTime).getTime() < new Date(data.endTime).getTime()
+    );
   },
   {
     message: "endTime must be after startTime",
@@ -123,22 +171,15 @@ export const JoinEventSchema = z.object({
 });
 
 export const UpdateGuestStatusSchema = z.object({
-  status: z.enum(['INVITED', 'JOINED', 'CHECKED_IN']),
+  status: z.enum(["INVITED", "JOINED", "CHECKED_IN"]),
 });
 
 export type JoinEventInput = z.infer<typeof JoinEventSchema>;
 export type UpdateGuestStatusInput = z.infer<typeof UpdateGuestStatusSchema>;
 
-// Socket.IO Event Types
-export interface ServerToClientEvents {
-  scheduleUpdated: (data: { eventId: string; scheduleItem: unknown }) => void;
-  announcement: (data: { eventId: string; announcement: unknown }) => void;
-  eventUpdated: (data: { eventId: string; event: unknown }) => void;
-  joined: (data: { eventId: string; success: boolean }) => void;
-  error: (data: { message: string }) => void;
-}
-
-export interface ClientToServerEvents {
-  joinEvent: (eventId: string) => void;
-  leaveEvent: (eventId: string) => void;
-}
+export type EventType =
+  | "WEDDING"
+  | "BIRTHDAY"
+  | "CORPORATE"
+  | "COLLEGE_FEST"
+  | "OTHER";

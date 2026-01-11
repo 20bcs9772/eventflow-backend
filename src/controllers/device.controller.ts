@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import deviceService from '../services/device.service';
 import { asyncHandler } from '../middleware/errorHandler';
-import { validate } from '../middleware/validation';
-import { CreateDeviceSchema, UpdateDeviceSchema } from '../types';
 
 export class DeviceController {
   createDevice = asyncHandler(async (req: Request, res: Response) => {
@@ -38,7 +36,7 @@ export class DeviceController {
   });
 
   deleteDevice = asyncHandler(async (req: Request, res: Response) => {
-    await deviceService.deleteDevice(req.params.id);
+    await deviceService.deleteDevice(req.params.id, req.body);
     res.json({
       success: true,
       message: 'Device deleted successfully',

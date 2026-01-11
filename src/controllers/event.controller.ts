@@ -1,42 +1,66 @@
-import { Request, Response } from 'express';
-import { Server } from 'socket.io';
-import eventService from '../services/event.service';
-import { asyncHandler } from '../middleware/errorHandler';
-import { emitEventUpdate } from '../socket/socketHandlers';
+import { Request, Response } from "express";
+import eventService from "../services/event.service";
+import notificationService from "../services/notification.service";
+import { asyncHandler } from "../middleware/errorHandler";
+import userService from "../services/user.service";
+import { AppError } from "../middleware/errorHandler";
+import { User } from "@prisma/client";
 
-// In a real app, you'd get adminId from authentication middleware
-// For MVP, we'll accept it as a query parameter or header
-const getAdminId = (req: Request): string => {
-  // Check header first (for API key or token)
-  const adminId = req.headers['x-admin-id'] as string;
-  if (adminId) {
-    return adminId;
+// Get user ID from Firebase auth middleware
+const getUserId = (req: Request): string => {
+  if (!req.user || !req.user.uid) {
+    throw new AppError("User not authenticated", 401);
   }
-  // Fallback to query parameter (for MVP simplicity)
-  return (req.query.adminId as string) || req.body.adminId || '';
+  return req.user.uid;
+};
+
+// Get user database ID from Firebase UID
+const getAdminId = async (req: Request): Promise<string> => {
+  const firebaseUid = getUserId(req);
+  const user = await userService.getUserByFirebaseUid(firebaseUid);
+  if (!user) {
+    throw new AppError("User not found in database", 404);
+  }
+  return user.id;
 };
 
 export class EventController {
-  createEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const adminId = getAdminId(req);
-    if (!adminId) {
-      res.status(400).json({
-        success: false,
-        error: 'Admin ID is required. Provide it via x-admin-id header or adminId in body/query',
-      });
-      return;
-    }
+  listEvents = asyncHandler(async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const search = (req.query.q as string) || undefined;
 
-    const event = await eventService.createEvent(adminId, req.body);
-    res.status(201).json({
+    const events = await eventService.getEvents(
+      req.user as User | null | undefined,
+      limit,
+      offset,
+      search
+    );
+
+    res.json({
       success: true,
-      data: event,
+      data: events,
     });
   });
 
+  createEvent = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const adminId = await getAdminId(req);
+      const event = await eventService.createEvent(adminId, req.body);
+      res.status(201).json({
+        success: true,
+        data: event,
+      });
+    }
+  );
+
   getEventById = asyncHandler(async (req: Request, res: Response) => {
-    const event = await eventService.getEventById(req.params.id);
-    res.json({
+    const event = await eventService.getEventById(
+      req.params.id,
+      req.user as User | null | undefined
+    );
+
+    return res.json({
       success: true,
       data: event,
     });
@@ -50,61 +74,119 @@ export class EventController {
     });
   });
 
-  getEventsByAdmin = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const adminId = getAdminId(req);
-    if (!adminId) {
-      res.status(400).json({
-        success: false,
-        error: 'Admin ID is required. Provide it via x-admin-id header or adminId in query',
+  getEventsByAdmin = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const adminId = await getAdminId(req);
+      const events = await eventService.getEventsByAdmin(adminId);
+      res.json({
+        success: true,
+        data: events,
       });
-      return;
     }
+  );
 
-    const events = await eventService.getEventsByAdmin(adminId);
+  getTypesOfEvents = asyncHandler(async (req: Request, res: Response) => {
+    const types = await eventService.getTypesOfEvents();
+
+    return res.json({
+      success: true,
+      data: types,
+    });
+  });
+
+  getEventsByType = asyncHandler(async (req: Request, res: Response) => {
+    const events = await eventService.getEventsByType(
+      req.params.type,
+      req.user as User | null | undefined
+    );
+
+    return res.json({
+      success: true,
+      data: events,
+    });
+  });
+
+  updateEvent = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const adminId = await getAdminId(req);
+      const event = await eventService.updateEvent(
+        req.params.id,
+        adminId,
+        req.body
+      );
+
+      // Send push notifications via FCM
+      await notificationService.sendEventUpdateNotification(event.id, event);
+
+      res.json({
+        success: true,
+        data: event,
+      });
+    }
+  );
+
+  deleteEvent = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const adminId = await getAdminId(req);
+      await eventService.deleteEvent(req.params.id, adminId);
+      res.json({
+        success: true,
+        message: "Event deleted successfully",
+      });
+    }
+  );
+
+  /**
+   * Get public events for discovery
+   * GET /api/events/public?limit=10&offset=0
+   */
+  getPublicEvents = asyncHandler(async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const events = await eventService.getPublicEvents(limit, offset);
     res.json({
       success: true,
       data: events,
     });
   });
 
-  updateEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const adminId = getAdminId(req);
-    if (!adminId) {
-      res.status(400).json({
-        success: false,
-        error: 'Admin ID is required. Provide it via x-admin-id header or adminId in body/query',
-      });
-      return;
-    }
+  /**
+   * Get events happening now (next 24 hours)
+   * GET /api/events/happening-now?limit=5
+   */
+  getEventsHappeningNow = asyncHandler(async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 5;
 
-    const event = await eventService.updateEvent(req.params.id, adminId, req.body);
-    
-    // Emit Socket.IO event
-    const io: Server = req.app.locals.io;
-    if (io) {
-      emitEventUpdate(io, event.id, event);
-    }
-
+    const events = await eventService.getEventsHappeningNow(limit);
     res.json({
       success: true,
-      data: event,
+      data: events,
     });
   });
 
-  deleteEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const adminId = getAdminId(req);
-    if (!adminId) {
-      res.status(400).json({
-        success: false,
-        error: 'Admin ID is required. Provide it via x-admin-id header or adminId in query',
-      });
-      return;
-    }
+  /**
+   * Get user's calendar events (created + joined)
+   * GET /api/events/calendar?startDate=2024-01-01&endDate=2024-12-31
+   */
+  getCalendarEvents = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = await getAdminId(req);
 
-    await eventService.deleteEvent(req.params.id, adminId);
+    const startDate = req.query.startDate
+      ? new Date(req.query.startDate as string)
+      : undefined;
+    const endDate = req.query.endDate
+      ? new Date(req.query.endDate as string)
+      : undefined;
+
+    const events = await eventService.getCalendarEvents(
+      adminId,
+      startDate,
+      endDate
+    );
     res.json({
       success: true,
-      message: 'Event deleted successfully',
+      data: events,
     });
   });
 }

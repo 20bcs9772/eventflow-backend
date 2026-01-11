@@ -1,6 +1,6 @@
-import prisma from '../config/database';
-import { CreateAnnouncementInput } from '../types';
-import { AppError } from '../middleware/errorHandler';
+import prisma from "../config/database";
+import { CreateAnnouncementInput } from "../types";
+import { AppError } from "../middleware/errorHandler";
 
 export class AnnouncementService {
   async createAnnouncement(senderId: string, data: CreateAnnouncementInput) {
@@ -13,7 +13,7 @@ export class AnnouncementService {
     });
 
     if (!event) {
-      throw new AppError('Event not found', 404);
+      throw new AppError("Event not found", 404);
     }
 
     // Verify sender exists
@@ -25,7 +25,7 @@ export class AnnouncementService {
     });
 
     if (!sender) {
-      throw new AppError('Sender not found', 404);
+      throw new AppError("Sender not found", 404);
     }
 
     return prisma.announcement.create({
@@ -72,7 +72,7 @@ export class AnnouncementService {
     });
 
     if (!announcement) {
-      throw new AppError('Announcement not found', 404);
+      throw new AppError("Announcement not found", 404);
     }
 
     return announcement;
@@ -88,7 +88,7 @@ export class AnnouncementService {
     });
 
     if (!event) {
-      throw new AppError('Event not found', 404);
+      throw new AppError("Event not found", 404);
     }
 
     return prisma.announcement.findMany({
@@ -105,7 +105,7 @@ export class AnnouncementService {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }
@@ -119,7 +119,7 @@ export class AnnouncementService {
     });
 
     if (!announcement) {
-      throw new AppError('Announcement not found', 404);
+      throw new AppError("Announcement not found", 404);
     }
 
     // Soft delete
@@ -127,6 +127,65 @@ export class AnnouncementService {
       where: { id },
       data: {
         deletedAt: new Date(),
+      },
+    });
+  }
+
+  async updateAnnouncement(
+    id: string,
+    data: Partial<Pick<CreateAnnouncementInput, "title" | "message">>
+  ) {
+    const announcement = await prisma.announcement.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+    });
+
+    if (!announcement) {
+      throw new AppError("Announcement not found", 404);
+    }
+
+    return prisma.announcement.update({
+      where: { id },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.message !== undefined && { message: data.message }),
+      },
+    });
+  }
+
+  async getAnnouncementsForUser(userId: string) {
+    return prisma.guestEvent.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+      select: {
+        event: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            announcements: {
+              where: {
+                deletedAt: null,
+              },
+              orderBy: {
+                createdAt: "desc",
+              },
+              take: 1,
+              select: {
+                id: true,
+                title: true,
+                message: true,
+                createdAt: true,
+                senderId: true,
+              },
+            },
+          },
+        },
       },
     });
   }

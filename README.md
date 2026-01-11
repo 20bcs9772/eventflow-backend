@@ -42,7 +42,7 @@ A real-time event companion app backend built with Node.js, Express, TypeScript,
    ```
    Edit `.env` and fill in your database URL and Firebase credentials.
 
-3. **Set up database:**
+3. **Set up database & Prisma:**
    ```bash
    # Generate Prisma Client
    npm run prisma:generate
@@ -51,7 +51,12 @@ A real-time event companion app backend built with Node.js, Express, TypeScript,
    npm run prisma:migrate
    ```
 
-4. **Start the development server:**
+4. **Run migrations (create/update DB schema):**
+   ```bash
+   npm run prisma:migrate
+   ```
+
+5. **Start the development server:**
    ```bash
    npm run dev
    ```
@@ -97,13 +102,28 @@ backend/
 - **Multi-Device**: Users can register multiple devices for push notifications
 - **Notification Logging**: All push notifications are logged for tracking
 
-## API Endpoints
+## API Endpoints (high level)
+
+> For full, interactive documentation, open Swagger UI at: `GET /api/docs`
+
+### Auth
+- `POST /api/auth/register` - Register new user (Firebase-authenticated)
+- `POST /api/auth/login` - Login existing user (or create for social)
+- `GET /api/auth/me` - Get current user profile
+- `PATCH /api/auth/profile` - Update profile
+- `DELETE /api/auth/account` - Delete account
+- `POST /api/auth/verify` - Verify token validity
 
 ### Events
-- `POST /api/events` - Create event (generates shortCode automatically)
+- `POST /api/events` - Create event (generates `shortCode` automatically)
+- `GET /api/events` - List/search accessible events (supports `?q=` and pagination)
 - `GET /api/events/:id` - Get event by ID
-- `GET /api/events/shortcode/:shortCode` - Get event by short code
+- `GET /api/events/code/:shortCode` - Get event by short code
 - `GET /api/events/admin` - Get events by admin
+- `GET /api/events/public` - Get public events
+- `GET /api/events/happening-now` - Get events happening in next 24h
+- `GET /api/events/types` - Get available event types
+- `GET /api/events/types/:type` - Get events by type
 - `PATCH /api/events/:id` - Update event
 - `DELETE /api/events/:id` - Soft delete event
 
@@ -113,22 +133,27 @@ backend/
 - `GET /api/schedule/:id` - Get schedule item by ID
 - `PATCH /api/schedule/:id` - Update schedule item
 - `DELETE /api/schedule/:id` - Soft delete schedule item
+- `PATCH /api/schedule/reorder` - Bulk reorder schedule items for an event
 
 ### Announcements
 - `POST /api/announcements` - Create announcement (requires x-sender-id header)
 - `GET /api/announcements/event/:eventId` - Get announcements for event
 - `GET /api/announcements/:id` - Get announcement by ID
+- `PATCH /api/announcements/:id` - Update announcement
 - `DELETE /api/announcements/:id` - Soft delete announcement
 
 ### Guest Events
 - `POST /api/guests/join` - Join an event (by eventId or shortCode)
+- `GET /api/guests/my-events` - Get events for currently authenticated user
 - `GET /api/guests/user/:userId` - Get events for user
 - `GET /api/guests/event/:eventId` - Get guests for event
+- `GET /api/guests/:userId/:eventId` - Get guest-event record for a specific user and event
 - `PATCH /api/guests/:userId/:eventId/status` - Update guest status (INVITED/JOINED/CHECKED_IN)
-- `DELETE /api/guests/:userId/:eventId` - Leave event (soft delete)
+- `DELETE /api/guests/:eventId` - Leave event (soft delete)
 
 ### Users
 - `POST /api/users` - Create user
+- `GET /api/users` - List/search users (admin-only, supports `?q=` and pagination)
 - `GET /api/users/:id` - Get user by ID
 - `PATCH /api/users/:id` - Update user
 - `DELETE /api/users/:id` - Soft delete user

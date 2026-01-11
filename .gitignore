@@ -12,9 +12,6 @@ build/
 .env.local
 .env.*.local
 
-# Prisma
-prisma/migrations/
-
 # Logs
 logs/
 *.log

@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
-import * as admin from 'firebase-admin';
-import { AppError } from './errorHandler';
+import { Request, Response, NextFunction } from "express";
+import * as admin from "firebase-admin";
+import { AppError } from "./errorHandler";
+import userService from "../services/user.service";
+import { UserRole } from "@prisma/client";
 
 // Extend Express Request type to include user
 declare global {
@@ -11,7 +13,7 @@ declare global {
         email?: string;
         name?: string;
         picture?: string;
-        authProvider: 'EMAIL' | 'GOOGLE' | 'APPLE';
+        authProvider: "EMAIL" | "GOOGLE" | "APPLE";
       };
     }
   }
@@ -29,28 +31,28 @@ export const verifyFirebaseToken = async (
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new AppError('No authorization token provided', 401);
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new AppError("No authorization token provided", 401);
     }
 
-    const idToken = authHeader.split('Bearer ')[1];
+    const idToken = authHeader.split("Bearer ")[1];
 
     if (!idToken) {
-      throw new AppError('Invalid authorization token format', 401);
+      throw new AppError("Invalid authorization token format", 401);
     }
 
     // Verify the ID token
     const decodedToken = await admin.auth().verifyIdToken(idToken);
 
     // Determine auth provider from Firebase token
-    let authProvider: 'EMAIL' | 'GOOGLE' | 'APPLE' = 'EMAIL';
-    
+    let authProvider: "EMAIL" | "GOOGLE" | "APPLE" = "EMAIL";
+
     if (decodedToken.firebase?.sign_in_provider) {
       const provider = decodedToken.firebase.sign_in_provider;
-      if (provider === 'google.com') {
-        authProvider = 'GOOGLE';
-      } else if (provider === 'apple.com') {
-        authProvider = 'APPLE';
+      if (provider === "google.com") {
+        authProvider = "GOOGLE";
+      } else if (provider === "apple.com") {
+        authProvider = "APPLE";
       }
     }
 
@@ -67,13 +69,13 @@ export const verifyFirebaseToken = async (
   } catch (error) {
     if (error instanceof AppError) {
       next(error);
-    } else if ((error as any).code === 'auth/id-token-expired') {
-      next(new AppError('Token has expired', 401));
-    } else if ((error as any).code === 'auth/argument-error') {
-      next(new AppError('Invalid token', 401));
+    } else if ((error as any).code === "auth/id-token-expired") {
+      next(new AppError("Token has expired", 401));
+    } else if ((error as any).code === "auth/argument-error") {
+      next(new AppError("Invalid token", 401));
     } else {
-      console.error('Token verification error:', error);
-      next(new AppError('Authentication failed', 401));
+      console.error("Token verification error:", error);
+      next(new AppError("Authentication failed", 401));
     }
   }
 };
@@ -90,11 +92,11 @@ export const optionalAuth = async (
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return next();
     }
 
-    const idToken = authHeader.split('Bearer ')[1];
+    const idToken = authHeader.split("Bearer ")[1];
 
     if (!idToken) {
       return next();
@@ -102,14 +104,14 @@ export const optionalAuth = async (
 
     const decodedToken = await admin.auth().verifyIdToken(idToken);
 
-    let authProvider: 'EMAIL' | 'GOOGLE' | 'APPLE' = 'EMAIL';
-    
+    let authProvider: "EMAIL" | "GOOGLE" | "APPLE" = "EMAIL";
+
     if (decodedToken.firebase?.sign_in_provider) {
       const provider = decodedToken.firebase.sign_in_provider;
-      if (provider === 'google.com') {
-        authProvider = 'GOOGLE';
-      } else if (provider === 'apple.com') {
-        authProvider = 'APPLE';
+      if (provider === "google.com") {
+        authProvider = "GOOGLE";
+      } else if (provider === "apple.com") {
+        authProvider = "APPLE";
       }
     }
 
@@ -137,12 +139,19 @@ export const requireAdmin = async (
   _res: Response,
   next: NextFunction
 ) => {
-  if (!req.user) {
-    return next(new AppError('Authentication required', 401));
+  if (!req.user || !req.user.uid) {
+    return next(new AppError("Authentication required", 401));
   }
 
-  // This would need to check the database for user role
-  // For now, we'll implement this check in the auth service
-  next();
-};
+  try {
+    const user = await userService.getUserByFirebaseUid(req.user.uid);
 
+    if (!user || user.role !== UserRole.ADMIN) {
+      return next(new AppError("Admin role required", 403));
+    }
+
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+};
