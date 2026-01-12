@@ -3,6 +3,7 @@ import eventController from "../controllers/event.controller";
 import { validate } from "../middleware/validation";
 import { optionalAuth, verifyFirebaseToken } from "../middleware/auth";
 import { CreateEventSchema, UpdateEventSchema } from "../types";
+import { uploadEventImages } from "../middleware/upload";
 
 const router = Router();
 
@@ -13,6 +14,11 @@ router.get("/", optionalAuth, eventController.listEvents);
 router.post(
   "/",
   verifyFirebaseToken,
+  uploadEventImages.fields([
+    { name: "coverImage", maxCount: 1 },
+    { name: "portraitImage", maxCount: 1 },
+    { name: "galleryImages", maxCount: 10 },
+  ]),
   validate(CreateEventSchema),
   eventController.createEvent
 );

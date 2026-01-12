@@ -46,7 +46,23 @@ export class EventController {
   createEvent = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
       const adminId = await getAdminId(req);
-      const event = await eventService.createEvent(adminId, req.body);
+
+      const files = req.files as {
+        coverImage?: Express.Multer.File[];
+        portraitImage?: Express.Multer.File[];
+        galleryImages?: Express.Multer.File[];
+      };
+
+      const coverImage = files?.coverImage?.[0]?.location ?? null;
+      const portraitImage = files?.portraitImage?.[0]?.location ?? null;
+      const galleryImages = files?.galleryImages?.map((f) => f.location) ?? [];
+
+      const event = await eventService.createEvent(adminId, {
+        ...req.body,
+        coverImage,
+        portraitImage,
+        galleryImages,
+      });
       res.status(201).json({
         success: true,
         data: event,
