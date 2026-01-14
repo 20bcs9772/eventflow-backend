@@ -25,6 +25,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.966.0",
     "@prisma/client": "^5.7.1",
+    "@sentry/node": "^10.33.0",
+    "@sentry/profiling-node": "^10.33.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
