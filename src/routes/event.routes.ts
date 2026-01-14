@@ -4,6 +4,7 @@ import { validate } from "../middleware/validation";
 import { optionalAuth, verifyFirebaseToken } from "../middleware/auth";
 import { CreateEventSchema, UpdateEventSchema } from "../types";
 import { uploadEventImages } from "../middleware/upload";
+import { parseFormDataJson } from "../middleware/parseFormDataJson";
 
 const router = Router();
 
@@ -19,6 +20,7 @@ router.post(
     { name: "portraitImage", maxCount: 1 },
     { name: "galleryImages", maxCount: 10 },
   ]),
+  parseFormDataJson,
   validate(CreateEventSchema),
   eventController.createEvent
 );
