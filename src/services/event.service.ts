@@ -164,6 +164,9 @@ export class EventService {
           type: data.type || "OTHER",
           shortCode,
           adminId,
+          coverImage: data?.coverImage ?? null,
+          portraitImage: data?.portraitImage ?? null,
+          galleryImages: data?.galleryImages ?? [],
         },
       });
 
